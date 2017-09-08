@@ -31,7 +31,7 @@ module KafkaTools
       true
     end
 
-    def self.bulk_queue(scope)
+    def bulk_queue(scope)
       topic_cache = {}
 
       enumerable(scope).each_slice(250) do |slice|
