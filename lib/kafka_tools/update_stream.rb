@@ -7,10 +7,16 @@ module KafkaTools
 
     module ClassMethods
       def update_stream(update_streamer:)
+        @update_streamer = update_streamer
+
         after_save { |object| update_streamer.delay object }
         after_touch { |object| update_streamer.delay object }
         after_destroy { |object| update_streamer.delay object }
         after_commit { |object| update_streamer.queue object }
+      end
+
+      def update_streamer
+        @update_streamer
       end
     end
 

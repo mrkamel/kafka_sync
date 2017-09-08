@@ -6,6 +6,7 @@ require "kafka_tools/delayer"
 require "kafka_tools/update_streamer"
 require "kafka_tools/update_stream"
 require "kafka_tools/cascader"
+require "kafka_tools/fake_producer"
 require "kafka"
 require "zk"
 
