@@ -21,14 +21,7 @@ module KafkaTools
           slice.each do |object|
             topic_cache[object.class] ||= object.class.name.pluralize.underscore
 
-            producer.produce(
-              JSON.generate(
-                payload: object.kafka_payload,
-                created_at: Time.now.to_f,
-                topic: topic_cache[object.class],
-                topic: "delay_5m"
-              )
-            )
+            producer.produce(JSON.generate(payload: object.kafka_payload, created_at: Time.now.to_f, topic: topic_cache[object.class]), topic: "delay_5m")
           end
 
           producer.deliver_messages
