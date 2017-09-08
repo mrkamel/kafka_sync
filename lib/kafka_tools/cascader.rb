@@ -29,6 +29,10 @@ module KafkaTools
       @logger.info("Cascaded #{count} events for #{@name}") if count > 0
     end
 
+    def ids(messages)
+      messages.reject { |message| message["cascaded"] }.map { |message| message["id"] }.uniq
+    end
+
     private
 
     def enumerable(scope)
