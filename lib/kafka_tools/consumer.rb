@@ -9,7 +9,7 @@ module KafkaTools
       @logger = logger
       @block = block
 
-      @zk_path = "/kafka_consumer/topics/#{@topic}/#{@name}/offset"
+      @zk_path = "/kafka_tools/consumer/topics/#{@topic}/#{@name}/offset"
 
       leader_election = LeaderElection.new(zk: @zk, path: "/kafka_tools/consumer/topics/#{@topic}/#{@name}/leader", value: `hostname`.strip, logger: @logger)
       leader_election.as_leader { run }
@@ -17,6 +17,20 @@ module KafkaTools
 
       super()
     end 
+
+    def migrate
+      old_zk_path = "/kafka_consumer/topics/#{@topic}/#{@name}/offset"
+
+      @zk.mkdir_p(@zk_path)
+
+      offset = @zk.get(old_zk_path)[0]
+
+      unless offset.to_s.empty?
+        @zk.set(@zk_path, offset.to_s)
+
+        @logger.info "Migrating #{old_zk_path} -> #{@zk_path}: #{offset}"
+      end
+    end
 
     def run 
       @zk.mkdir_p(@zk_path) unless @zk.exists?(@zk_path)

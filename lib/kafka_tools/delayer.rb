@@ -11,7 +11,7 @@ module KafkaTools
       @extra_sleep = extra_sleep
       @logger = logger
 
-      @zk_path = "/kafka_delayer/topics/#{@topic}/offset"
+      @zk_path = "/kafka_tools/delayer/topics/#{@topic}/offset"
 
       @zk.mkdir_p(@zk_path) unless @zk.exists?(@zk_path)
 
@@ -27,6 +27,20 @@ module KafkaTools
       @buffered_messages_count = 0
 
       super()
+    end
+
+    def migrate
+      old_zk_path = "/kafka_delayer/topics/#{@topic}/offset"
+
+      @zk.mkdir_p(@zk_path)
+
+      offset = @zk.get(old_zk_path)[0]
+
+      unless offset.to_s.empty?
+        @zk.set(@zk_path, offset.to_s)
+
+        @logger.info "Migrated #{old_zk_path} -> #{@zk_path}: #{offset}"
+      end
     end
 
     def send_and_commit
