@@ -6,7 +6,7 @@ module KafkaTools
       @logger = logger
     end
 
-    def import(messages:)
+    def import(messages)
       ids = messages.collect { |message| message["id"] }.uniq
 
       @index.bulk ignore_errors: [409] do |bulk|
