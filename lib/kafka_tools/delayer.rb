@@ -1,7 +1,7 @@
 
 module KafkaTools
   class Delayer
-    def initialize(zk:, consumer:, producer:, topic:, delay:, delay_topic:, extra_sleep: 0, logger: Logger.new("/dev/null"))
+    def initialize(zk:, consumer:, producer:, topic:, delay: nil, delay_topic:, extra_sleep: 0, logger: Logger.new("/dev/null"))
       @zk = zk
       @consumer = consumer
       @producer = producer
