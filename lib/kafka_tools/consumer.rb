@@ -9,7 +9,7 @@ module KafkaTools
       @logger = logger
       @block = block
 
-      @zk_path = "/kafka_tools/consumer/topics/#{@topic}/#{@name}/offset"
+      @zk_path = "/kafka_consumer/topics/#{@topic}/#{@name}/offset"
 
       leader_election = LeaderElection.new(zk: @zk, path: "/kafka_tools/consumer/topics/#{@topic}/#{@name}/leader", value: `hostname`.strip, logger: @logger)
       leader_election.as_leader { run }
