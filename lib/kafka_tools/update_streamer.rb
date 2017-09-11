@@ -41,6 +41,8 @@ module KafkaTools
 
             producer.produce(JSON.generate(object.kafka_payload), topic: topic_cache[object.class])
           end
+
+          producer.deliver_messages
         end
       end
 
