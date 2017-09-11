@@ -1,7 +1,7 @@
 
 module KafkaTools
   class Delayer
-    def initialize(zk:, consumer:, producer:, topic:, delay:, delay_topic: nil, extra_sleep: 0, logger: Logger.new("/dev/null"))
+    def initialize(zk:, consumer:, producer:, topic:, delay:, delay_topic: nil, extra_sleep: 0, logger: Logger.new("/dev/null"), migrate: false)
       @zk = zk
       @consumer = consumer
       @producer = producer
@@ -13,23 +13,16 @@ module KafkaTools
 
       @zk_path = "/kafka_tools/delayer/topics/#{@topic}/offset"
 
-      @zk.mkdir_p(@zk_path) unless @zk.exists?(@zk_path)
-
-      @offset = @zk.get(@zk_path)[0]
-      @offset = @offset.to_s.empty? ? :earliest : @offset.to_i
-
-      @uncommitted_offset = @offset
+      @buffered_messages_count = 0
 
       leader_election = LeaderElection.new(zk: @zk, path: "/kafka_delayer/topics/#{@topic}/leader", value: `hostname`.strip, logger: @logger)
-      leader_election.as_leader { run }
+      leader_election.as_leader { migrate_zk if migrate; run }
       leader_election.run
-
-      @buffered_messages_count = 0
 
       super()
     end
 
-    def migrate
+    def migrate_zk
       old_zk_path = "/kafka_delayer/topics/#{@topic}/offset"
 
       @zk.mkdir_p(@zk_path)
@@ -96,6 +89,13 @@ module KafkaTools
     end
 
     def run
+      @zk.mkdir_p(@zk_path) unless @zk.exists?(@zk_path)
+
+      @offset = @zk.get(@zk_path)[0]
+      @offset = @offset.to_s.empty? ? :earliest : @offset.to_i
+
+      @uncommitted_offset = @offset
+
       loop do
         process_messages fetch_messages
       end
