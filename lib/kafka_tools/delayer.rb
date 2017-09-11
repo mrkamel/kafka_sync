@@ -20,7 +20,7 @@ module KafkaTools
 
       @uncommitted_offset = @offset
 
-      leader_election = LeaderElection.new(@zk, "/kafka_delayer/topics/#{@topic}/leader", `hostname`.strip, logger: @logger)
+      leader_election = LeaderElection.new(zk: @zk, path: "/kafka_delayer/topics/#{@topic}/leader", value: `hostname`.strip, logger: @logger)
       leader_election.as_leader { run }
       leader_election.run
 
