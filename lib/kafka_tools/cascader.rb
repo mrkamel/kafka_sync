@@ -22,7 +22,7 @@ module KafkaTools
             count += 1
           end
 
-          producer.deliver
+          producer.deliver_messages
         end
       end
 
