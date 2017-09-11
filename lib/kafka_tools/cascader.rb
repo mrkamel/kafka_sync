@@ -1,7 +1,7 @@
 
 module KafkaTools
   class Cascader
-    def inititialize(name:, producer_pool:, logger: Logger.new("/dev/null"))
+    def initialize(name:, producer_pool:, logger: Logger.new("/dev/null"))
       @name = name
       @producer_pool = producer_pool
       @logger = logger
