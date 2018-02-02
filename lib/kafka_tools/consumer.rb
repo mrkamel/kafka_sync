@@ -1,7 +1,7 @@
 
 module KafkaTools
   class Consumer
-    def initialize(zk:, kafka:, topic:, name:, logger: Logger.new("/dev/null"), migrate: false, &block)
+    def initialize(zk:, kafka:, topic:, name:, logger: Logger.new("/dev/null"), &block)
       @zk = zk
       @kafka = kafka
       @topic = topic
@@ -12,25 +12,11 @@ module KafkaTools
       @zk_path = "/kafka_tools/consumer/topics/#{@topic}/#{@name}/offset"
 
       leader_election = LeaderElection.new(zk: @zk, path: "/kafka_tools/consumer/topics/#{@topic}/#{@name}/leader", value: `hostname`.strip, logger: @logger)
-      leader_election.as_leader { migrate_zk if migrate; run }
+      leader_election.as_leader { run }
       leader_election.run
 
       super()
     end 
-
-    def migrate_zk
-      old_zk_path = "/kafka_consumer/topics/#{@topic}/#{@name}/offset"
-
-      @zk.mkdir_p(@zk_path)
-
-      offset = @zk.get(old_zk_path)[0]
-
-      unless offset.to_s.empty?
-        @zk.set(@zk_path, offset.to_s)
-
-        @logger.info "Migrating #{old_zk_path} -> #{@zk_path}: #{offset}"
-      end
-    end
 
     def run 
       @zk.mkdir_p(@zk_path) unless @zk.exists?(@zk_path)
