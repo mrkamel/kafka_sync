@@ -6,7 +6,8 @@ module KafkaTools
     end
 
     def import(index:, messages:)
-      ids = messages.collect { |message| message["id"] }.uniq
+      indexed_messages = messages.index_by { |message| message["id"] }
+      ids = indexed_messages.keys
 
       index.bulk ignore_errors: [409] do |bulk|
         hash = index.index_scope(index.model.where(id: ids)).index_by(&:id)
@@ -15,7 +16,7 @@ module KafkaTools
           if object = hash[id]
             bulk.import object.id, JSON.generate(index.serialize(object)), index.index_options(object)
           else
-            bulk.delete id
+            bulk.delete id, index.index_options(Hashie::Mash.new(indexed_messages[id]))
           end
         end
 
