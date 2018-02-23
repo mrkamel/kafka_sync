@@ -14,7 +14,7 @@ module KafkaTools
 
         ids.each do |id|
           if object = hash[id]
-            bulk.import object.id, JSON.generate(index.serialize(object)), index.index_options(object)
+            bulk.import object.id, index.serialize(object), index.index_options(object)
           else
             bulk.delete id, index.index_options(Hashie::Mash.new(indexed_messages[id]))
           end
