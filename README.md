@@ -1,8 +1,6 @@
 # KafkaTools
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/kafka_tools`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Tools for using Apache Kafka.
 
 ## Installation
 
@@ -20,9 +18,64 @@ Or install it yourself as:
 
     $ gem install kafka_tools
 
-## Usage
+## Consumer
 
-TODO: Write usage instructions here
+```ruby
+KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_consumer", logger: Logger.new(STDOUT)) do |messages|
+  # ...
+end
+```
+
+## Delayer
+
+```ruby
+KafkaTools::Delayer.new(
+  zk: ZK.new,
+  kafka: Kafka.new(seed_brokers: ["localhost:9092"]),
+  producer: Kafka.new(seed_brokers: ["localhost:9092"]).producer(required_acks: -1),
+  topic: "my_topic",
+  partition: 0,
+  delay: 300,
+  delay_topic: "my_topic_5m",
+  logger: Logger.new(STDOUT),
+  extra_sleep: 30
+)
+```
+
+## Cascader
+
+```ruby
+MyProducerPool = ConnectionPool.new(size: 3, timeout: 60) { Kafka.new(seed_brokers: ["localhost:9092"]) }
+
+KafkaTools::Cascader.new(name: "my_cascader", producer_pool: MyProducerPool, logger: Logger.new(STDOUT)).tap do |cascader|
+  KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_cascading_consumer", logger: Logger.new(STDOUT)) do |messages|
+    cascader.import MyModel.preload(:my_association).where(id: cascader.ids(messages)).find_each.lazy.map(&:my_association)
+  end
+end
+```
+
+## UpdateStream
+
+```ruby
+MyProducerPool = ConnectionPool.new(size: 3, timeout: 60) { Kafka.new(seed_brokers: ["localhost:9092"]) }
+MyUpdateStreamer = KafkaTools::UpdateStreamer.new(producer_pool: MyProducerPool)
+
+class MyModel < ActiveRecord::Base
+  include KafkaTools::UpdateStream
+
+  update_stream(update_streamer: MyUpdateStreamer)
+end
+```
+
+## Indexer
+
+```ruby
+KafkaTools::Indexer.new(logger: Logger.new(STDOUT)).tap do |indexer|
+  KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_index_consumer", logger: Logger.new(STDOUT)) do |messages|
+    indexer.import(index: MyIndex, messages: messages)
+  end
+end
+```
 
 ## Development
 

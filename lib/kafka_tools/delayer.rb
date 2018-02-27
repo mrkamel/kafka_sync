@@ -1,39 +1,26 @@
 
 module KafkaTools
   class Delayer
-    def initialize(zk:, consumer:, producer:, topic:, delay:, delay_topic: nil, extra_sleep: 0, logger: Logger.new("/dev/null"), migrate: false)
+    def initialize(zk:, kafka:, producer:, topic:, partition: 0, delay:, delay_topic: nil, extra_sleep: 0, logger: Logger.new("/dev/null"))
       @zk = zk
-      @consumer = consumer
+      @kafka = kafka
       @producer = producer
       @topic = topic
+      @partition = partition
       @delay = delay
       @delay_topic = delay_topic
       @extra_sleep = extra_sleep
       @logger = logger
 
-      @zk_path = "/kafka_tools/delayer/topics/#{@topic}/offset"
+      @zk_path = "/kafka_tools/delayer/topics/#{@topic}/partitions/#{@partition}/offset"
 
       @buffered_messages_count = 0
 
-      leader_election = LeaderElection.new(zk: @zk, path: "/kafka_delayer/topics/#{@topic}/leader", value: `hostname`.strip, logger: @logger)
-      leader_election.as_leader { migrate_zk if migrate; run }
+      leader_election = LeaderElection.new(zk: @zk, path: "/kafka_tools/delayer/topics/#{@topic}/partitions/#{@partition}/leader", value: `hostname`.strip, logger: @logger)
+      leader_election.as_leader { run }
       leader_election.run
 
       super()
-    end
-
-    def migrate_zk
-      old_zk_path = "/kafka_delayer/topics/#{@topic}/offset"
-
-      @zk.mkdir_p(@zk_path)
-
-      offset = @zk.get(old_zk_path)[0]
-
-      unless offset.to_s.empty?
-        @zk.set(@zk_path, offset.to_s)
-
-        @logger.info "Migrated #{old_zk_path} -> #{@zk_path}: #{offset}"
-      end
     end
 
     def send_and_commit
@@ -85,7 +72,7 @@ module KafkaTools
     end
 
     def fetch_messages
-      @consumer.fetch_messages(topic: @topic, offset: @offset, partition: 0, max_wait_time: 8)
+      @kafka.fetch_messages(topic: @topic, offset: @offset, partition: @partition, max_wait_time: 8)
     end
 
     def run
