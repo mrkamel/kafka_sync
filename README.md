@@ -21,7 +21,9 @@ Or install it yourself as:
 ## Consumer
 
 ```ruby
-KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_consumer", logger: Logger.new(STDOUT)) do |messages|
+MyLogger = Logger.new(STDOUT)
+
+KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_consumer", logger: MyLogger) do |messages|
   # ...
 end
 ```
@@ -29,6 +31,8 @@ end
 ## Delayer
 
 ```ruby
+MyLogger = Logger.new(STDOUT)
+
 KafkaTools::Delayer.new(
   zk: ZK.new,
   kafka: Kafka.new(seed_brokers: ["localhost:9092"]),
@@ -37,7 +41,7 @@ KafkaTools::Delayer.new(
   partition: 0,
   delay: 300,
   delay_topic: "my_topic_5m",
-  logger: Logger.new(STDOUT),
+  logger: MyLogger,
   extra_sleep: 30
 )
 ```
@@ -45,10 +49,11 @@ KafkaTools::Delayer.new(
 ## Cascader
 
 ```ruby
+MyLogger = Logger.new(STDOUT)
 MyProducerPool = ConnectionPool.new(size: 3, timeout: 60) { Kafka.new(seed_brokers: ["localhost:9092"]) }
 
-KafkaTools::Cascader.new(name: "my_cascader", producer_pool: MyProducerPool, logger: Logger.new(STDOUT)).tap do |cascader|
-  KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_cascading_consumer", logger: Logger.new(STDOUT)) do |messages|
+KafkaTools::Cascader.new(name: "my_cascader", producer_pool: MyProducerPool, logger: MyLogger).tap do |cascader|
+  KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_cascading_consumer", logger: MyLogger) do |messages|
     cascader.import MyModel.preload(:my_association).where(id: cascader.ids(messages)).find_each.lazy.map(&:my_association)
   end
 end
@@ -70,8 +75,10 @@ end
 ## Indexer
 
 ```ruby
-KafkaTools::Indexer.new(logger: Logger.new(STDOUT)).tap do |indexer|
-  KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_index_consumer", logger: Logger.new(STDOUT)) do |messages|
+MyLogger = Logger.new(STDOUT)
+
+KafkaTools::Indexer.new(logger: MyLogger).tap do |indexer|
+  KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_index_consumer", logger: MyLogger) do |messages|
     indexer.import(index: MyIndex, messages: messages)
   end
 end
