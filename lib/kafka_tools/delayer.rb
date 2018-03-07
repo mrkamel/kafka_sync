@@ -12,11 +12,11 @@ module KafkaTools
       @extra_sleep = extra_sleep
       @logger = logger
 
-      @zk_path = "/kafka_tools/delayer/topics/#{@topic}/partitions/#{@partition}/offset"
+      @zk_path = "/kafka_tools/delayer/#{@topic}/#{@partition}/offset"
 
       @buffered_messages_count = 0
 
-      leader_election = LeaderElection.new(zk: @zk, path: "/kafka_tools/delayer/topics/#{@topic}/partitions/#{@partition}/leader", value: `hostname`.strip, logger: @logger)
+      leader_election = LeaderElection.new(zk: @zk, path: "/kafka_tools/delayer/#{@topic}/#{@partition}/leader", value: `hostname`.strip, logger: @logger)
       leader_election.as_leader { run }
       leader_election.run
 
