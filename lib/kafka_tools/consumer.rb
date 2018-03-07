@@ -10,9 +10,9 @@ module KafkaTools
       @block = block
       @partition = partition
 
-      @zk_path = "/kafka_tools/consumer/topics/#{@topic}/partitions/#{@partition}/names/#{@name}/offset"
+      @zk_path = "/kafka_tools/consumer/topics/#{@topic}/partitions/#{@partition}/#{@name}/offset"
 
-      leader_election = LeaderElection.new(zk: @zk, path: "/kafka_tools/consumer/topics/#{@topic}/partitions/#{@partition}/names/#{@name}/leader", value: `hostname`.strip, logger: @logger)
+      leader_election = LeaderElection.new(zk: @zk, path: "/kafka_tools/consumer/topics/#{@topic}/partitions/#{@partition}/#{@name}/leader", value: `hostname`.strip, logger: @logger)
       leader_election.as_leader { run }
       leader_election.run
 
