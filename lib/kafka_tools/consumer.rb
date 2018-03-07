@@ -20,6 +20,8 @@ module KafkaTools
     end 
 
     def migrate_zk
+      return if @zk.exists?(@zk_path)
+
       old_zk_path = "/kafka_tools/consumer/topics/#{@topic}/#{@name}/offset"
 
       @zk.mkdir_p(@zk_path)
