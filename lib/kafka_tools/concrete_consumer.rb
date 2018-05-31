@@ -6,7 +6,7 @@ module KafkaTools
     class WrappedMessage
       extend Forwardable
 
-      def_delegator :@message, :topic, :partition, :key, :offset
+      def_delegators :@message, :topic, :partition, :key, :offset
 
       def initialize(message)
         @message = message
