@@ -1,7 +1,7 @@
 
 module KafkaTools
   class Consumer
-    def initialize(zk_hosts: "127.0.0.1:2181", seed_brokers: ["127.0.0.1:9092"], client_id: "kafka_client", logger: Logger.new("/dev/null"))
+    def initialize(zk_hosts: "127.0.0.1:2181", seed_brokers: ["127.0.0.1:9092"], client_id: "kafka_tools", logger: Logger.new("/dev/null"))
       @zk_hosts = zk_hosts
       @seed_brokers = seed_brokers
       @client_id = client_id

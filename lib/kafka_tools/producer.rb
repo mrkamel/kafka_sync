@@ -22,19 +22,19 @@ module KafkaTools
       end
     end
 
-    def initialize(pool)
-      @pool = pool
+    def initialize(producer_pool:)
+      @producer_pool = producer_pool
     end
 
     def produce(message, topic:, partition: 0)
-      @pool.with do |producer|
+      @producer_pool.with do |producer|
         producer.produce(message, topic: topic, partition: partition)
         producer.deliver_messages
       end
     end
 
     def batch
-      @pool.with do |producer|
+      @producer_pool.with do |producer|
         batch = Batch.new(producer)
 
         yield batch
