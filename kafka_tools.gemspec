@@ -33,6 +33,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "ruby-kafka"
   spec.add_dependency "hashie"
   spec.add_dependency "zk"
+  spec.add_dependency "connection_pool"
 
   spec.add_development_dependency "bundler", "~> 1.15"
   spec.add_development_dependency "rake", "~> 10.0"
