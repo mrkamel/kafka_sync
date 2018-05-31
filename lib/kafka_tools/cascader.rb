@@ -1,9 +1,9 @@
 
 module KafkaTools
   class Cascader
-    def initialize(name:, producer_pool:, logger: Logger.new("/dev/null"))
+    def initialize(name:, producer:, logger: Logger.new("/dev/null"))
       @name = name
-      @producer_pool = producer_pool
+      @producer = producer
       @logger = logger
     end
 
@@ -13,16 +13,14 @@ module KafkaTools
       topic_cache = {}
 
       enumerable(scope).each_slice(250) do |slice|
-        @producer_pool.with do |producer|
+        @producer.batch do |batch|
           slice.each do |object|
             topic_cache[object.class] ||= object.class.name.pluralize.underscore
 
-            producer.produce JSON.generate(object.kafka_payload.merge(cascaded: true)), topic: topic_cache[object.class]
+            batch.produce JSON.generate(object.kafka_payload.merge(cascaded: true)), topic: topic_cache[object.class]
 
             count += 1
           end
-
-          producer.deliver_messages
         end
       end
 

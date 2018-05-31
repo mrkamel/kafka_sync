@@ -1,8 +1,8 @@
 
 module KafkaTools
   class UpdateStreamer
-    def initialize(producer_pool:)
-      @producer_pool = producer_pool
+    def initialize(producer:)
+      @producer = producer
     end
 
     def bulk(scope)
@@ -17,14 +17,12 @@ module KafkaTools
       topic_cache = {}
 
       enumerable(scope).each_slice(250) do |slice|
-        @producer_pool.with do |producer|
+        @producer.batch do |batch|
           slice.each do |object|
-            topic_cache[object.class] ||= object.class.name.pluralize.underscore
+            topic_cache[object.class] ||= topic(object)
 
-            producer.produce(JSON.generate(payload: object.kafka_payload, created_at: Time.now.to_f, topic: topic_cache[object.class]), topic: "delay_5m")
+            batch.produce(JSON.generate(payload: object.kafka_payload, created_at: Time.now.utc.to_f, topic: topic_cache[object.class]), topic: "delay_5m")
           end
-
-          producer.deliver_messages
         end
       end
 
@@ -35,14 +33,12 @@ module KafkaTools
       topic_cache = {}
 
       enumerable(scope).each_slice(250) do |slice|
-        @producer_pool.with do |producer|
+        @producer.batch do |batch|
           slice.each do |object|
-            topic_cache[object.class] ||= object.class.name.pluralize.underscore
+            topic_cache[object.class] ||= topic(object)
 
-            producer.produce(JSON.generate(object.kafka_payload), topic: topic_cache[object.class])
+            batch.produce(JSON.generate(object.kafka_payload), topic: topic_cache[object.class])
           end
-
-          producer.deliver_messages
         end
       end
 
@@ -50,24 +46,22 @@ module KafkaTools
     end
 
     def queue(object)
-      @producer_pool.with do |producer|
-        producer.produce JSON.generate(object.kafka_payload), topic: object.class.name.pluralize.underscore
-        producer.deliver_messages
-      end
+      @producer.produce JSON.generate(object.kafka_payload), topic: topic(object)
 
       true
     end
 
     def delay(object)
-      @producer_pool.with do |producer|
-        producer.produce JSON.generate(payload: object.kafka_payload, created_at: Time.now.to_f, topic: object.class.name.pluralize.underscore), topic: "delay_5m"
-        producer.deliver_messages
-      end
+      @producer.produce JSON.generate(payload: object.kafka_payload, created_at: Time.now.utc.to_f, topic: topic(object)), topic: "delay_5m"
 
       true
     end
 
     private
+
+    def topic(object)
+      object.class.name.pluralize.underscore
+    end
 
     def enumerable(scope)
       return scope.find_each if scope.respond_to?(:find_each)
