@@ -35,13 +35,13 @@ module KafkaTools
 
     def run
       leader_election = KafkaTools::LeaderElection.new(zk: @zk, path: "/kafka_tools/consumer/#{@topic}/#{@partition}/#{@name}/leader", value: `hostname`.strip, logger: @logger)
-      leader_election.as_leader { run }
+      leader_election.as_leader { work }
       leader_election.run
     end
 
     private
 
-    def run
+    def work
       @zk.mkdir_p(@zk_path) unless @zk.exists?(@zk_path)
 
       offset = @zk.get(@zk_path)[0]
