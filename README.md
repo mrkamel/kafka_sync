@@ -1,6 +1,43 @@
 # KafkaTools
 
-Tools for using Apache Kafka.
+Tools for using Apache Kafka. The primary purpose of these tools to be used
+with Kafka is to keep the models from your main database in sync with the
+respective ElasticSearch indexes.
+
+This works like follows:
+
+```ruby
+class MyModel < ActiveRecord::Base
+  include KafkaTools::UpdateStream
+
+  update_stream(KafkaUpdateStreamer)
+end
+```
+
+This installs model lifecycle callbacks, ie. `after_save`, `after_touch`,
+`after_destroy` and `after_commit`. These send messages to kafka,
+having a (customizable) payload:
+
+```ruby
+def kafka_payload
+  { id: id }
+end
+```
+
+such that a background worker can fetch these messages in batches and
+update/index the models for the respective id's. However, `after_save`,
+`after_touch` and `after_destroy` only send a delay message to kafka. These
+delay messages don't have to be fetched immediately but instead after e.g. 5
+minutes. This provides a safety net for cases where something crashes in
+between the database commit and the `after_commit` callback. Checkout the
+`Delayer` for details. Instead, the `after_commit` callback sends a message to
+kafka which can be fetched immediately such that your index updates in
+near-realtime.  If something crashes in between, the delay message will be
+fetched after 5 minutes and update the index (eventual consistency).
+
+Due to the combination of delay messages and instant messages, you'll never
+have to to do a full re-index after server crashes again, because your indexes
+will be self-healing.
 
 ## Installation
 
@@ -18,71 +55,95 @@ Or install it yourself as:
 
     $ gem install kafka_tools
 
+## Producer
+
+```ruby
+KafkaProducer = KafkaTools::Producer.new(producer_pool: ConnectionPool.new { Kafka.new(seed_brokers: ["localhost:9092"]) })
+
+KafkaProducer.produce("message", topic: "topic1", partition: 0)
+
+KafkaProducer.batch do |batch|
+  batch.produce("message1", topic: "topic2", partition: 0)
+  batch.produce("message2", topic: "topic3", partition: 1)
+end
+```
+
 ## Consumer
 
 ```ruby
-MyLogger = Logger.new(STDOUT)
+DefaultLogger = Logger.new(STDOUT)
 
-KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_consumer", logger: MyLogger) do |messages|
+KafkaConsumer = KafkaTools::Consumer.new(zk_hosts "127.0.0.1:2181", seed_brokers: ["localhost:9092"], client_id: "client", logger: DefaultLogger)
+
+KafkaConsumer.consume(topic: "topic1", name: "topic1_consumer") do |messages|
+  # ...
+end
+
+KafkaConsumer.consume(topic: "topic2", name: "topic2_consumer") do |messages|
   # ...
 end
 ```
 
-## Delayer
+## Indexer
+
+The `Indexer` fetches messages from the specified topic and partition.
+It then fetches the records from your main database specified in the messages.
+Finally, it updates your search index accordingly.
+
+The Indexer assumes to be used in combination with [search_flip](https://github.com/mrkamel/search_flip)
 
 ```ruby
-MyLogger = Logger.new(STDOUT)
+KafkaTools::Indexer.new(consumer: KafkaConsumer, topic: "topic1", name: "topic1_indexer", partition: 0, index: SomeIndex, logger: DefaultLogger)
+```
 
+## Delayer
+
+The delayer fetches the delay messages, ie. messages from the specified delay topic.
+It then checks if enough time has passed in between. Otherwise it will sleep until
+enough time has passed. Afterwards the delay re-sends the messages to the desired
+topic where an `Indexer` can fetch it and index it like usual.
+
+```ruby
 KafkaTools::Delayer.new(
-  zk: ZK.new,
-  kafka: Kafka.new(seed_brokers: ["localhost:9092"]),
-  producer: Kafka.new(seed_brokers: ["localhost:9092"]).producer(required_acks: -1),
-  topic: "my_topic",
+  consumer: KafkaConsumer,
+  producer: KafkaProducer,
+  topic: "delay_5m",
   partition: 0,
   delay: 300,
-  delay_topic: "my_topic_5m",
-  logger: MyLogger,
-  extra_sleep: 30
+  delay_topic: "delay_1h",
+  logger: DefaultLogger
 )
 ```
 
 ## Cascader
 
-```ruby
-MyLogger = Logger.new(STDOUT)
-MyProducerPool = ConnectionPool.new(size: 3, timeout: 60) { Kafka.new(seed_brokers: ["localhost:9092"]) }
+The `Cascader` is used to send messages to kafka for associations of a model.
 
-KafkaTools::Cascader.new(name: "my_cascader", producer_pool: MyProducerPool, logger: MyLogger).tap do |cascader|
-  KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_cascading_consumer", logger: MyLogger) do |messages|
-    cascader.import MyModel.preload(:my_association).where(id: cascader.ids(messages)).find_each.lazy.map(&:my_association)
+```ruby
+KafkaTools::Cascader.new(name: "cascader", producer: KafkaProducer, logger: DefaultLogger).tap do |cascader|
+  KafkaConsumer.consume(topic: "topic1", partition: 0, name: "cascading_consumer", logger: DefaultLogger) do |messages|
+    cascader.import SomeModel.preload(:some_association).where(id: cascader.ids(messages)).find_each.lazy.map(&:some_association)
   end
 end
 ```
 
 ## UpdateStream
 
+The `UpdateStream` module installs model lifecycle methods.
+
 ```ruby
-MyProducerPool = ConnectionPool.new(size: 3, timeout: 60) { Kafka.new(seed_brokers: ["localhost:9092"]) }
-MyUpdateStreamer = KafkaTools::UpdateStreamer.new(producer_pool: MyProducerPool)
+KafkaUpdateStreamer = KafkaTools::UpdateStreamer.new(producer: KafkaProducer)
 
 class MyModel < ActiveRecord::Base
   include KafkaTools::UpdateStream
 
-  update_stream(update_streamer: MyUpdateStreamer)
+  update_stream(update_streamer: KafkaUpdateStreamer)
 end
 ```
 
-## Indexer
+## UpdateStreamer
 
-```ruby
-MyLogger = Logger.new(STDOUT)
-
-KafkaTools::Indexer.new(logger: MyLogger).tap do |indexer|
-  KafkaTools::Consumer.new(zk: ZK.new, kafka: Kafka.new(seed_brokers: ["localhost:9092"]), topic: "my_topic", partition: 0, name: "my_index_consumer", logger: MyLogger) do |messages|
-    indexer.import(index: MyIndex, messages: messages)
-  end
-end
-```
+The `UpdateStreamer` actually sends the the delay as well as instant messages to Kafka.
 
 ## Development
 
