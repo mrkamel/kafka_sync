@@ -12,7 +12,7 @@ module KafkaTools
       zk = ZK.new(@zk_hosts)
       kafka = Kafka.new(seed_brokers: @seed_brokers, client_id: @client_id)
 
-      ConcreteConsumer.new(zk: zk, kafka: kafka, topic: topic, name: name, partition: partition, logger: logger, &block)
+      ConcreteConsumer.new(zk: zk, kafka: kafka, topic: topic, name: name, partition: partition, logger: @logger, &block)
     end
   end
 end
