@@ -27,14 +27,16 @@ module KafkaTools
       @logger = logger
 
       @zk_path = "/kafka_tools/consumer/#{@topic}/#{@partition}/#{@name}/offset"
-
-      leader_election = KafkaTools::LeaderElection.new(zk: @zk, path: "/kafka_tools/consumer/#{@topic}/#{@partition}/#{@name}/leader", value: `hostname`.strip, logger: logger)
-      leader_election.as_leader { run }
-      leader_election.run
     end
 
     def commit(offset)
       @zk.set @zk_path, offset.to_s
+    end
+
+    def run
+      leader_election = KafkaTools::LeaderElection.new(zk: @zk, path: "/kafka_tools/consumer/#{@topic}/#{@partition}/#{@name}/leader", value: `hostname`.strip, logger: @logger)
+      leader_election.as_leader { run }
+      leader_election.run
     end
 
     private

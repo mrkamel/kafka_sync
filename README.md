@@ -24,16 +24,16 @@ def kafka_payload
 end
 ```
 
-such that a background worker can fetch these messages in batches and
-update/index the models for the respective id's. However, `after_save`,
+such that background workers can fetch these messages in batches and
+update/index the records of the respective id's. However, `after_save`,
 `after_touch` and `after_destroy` only send a delay message to kafka. These
 delay messages don't have to be fetched immediately but instead after e.g. 5
 minutes. This provides a safety net for cases where something crashes in
 between the database commit and the `after_commit` callback. Checkout the
 `Delayer` for details. Instead, the `after_commit` callback sends a message to
 kafka which can be fetched immediately such that your index updates in
-near-realtime.  If something crashes in between, the delay message will be
-fetched after 5 minutes and update the index (eventual consistency).
+near-realtime. If something crashes in between, the delay message will be
+fetched after 5 minutes and update/fix the index (eventual consistency).
 
 Due to the combination of delay messages and instant messages, you'll never
 have to to do a full re-index after server crashes again, because your indexes
@@ -93,7 +93,7 @@ Finally, it updates your search index accordingly.
 The Indexer assumes to be used in combination with [search_flip](https://github.com/mrkamel/search_flip)
 
 ```ruby
-KafkaTools::Indexer.new(consumer: KafkaConsumer, topic: "topic1", name: "topic1_indexer", partition: 0, index: SomeIndex, logger: DefaultLogger)
+KafkaTools::Indexer.new(consumer: KafkaConsumer, topic: "topic1", name: "topic1_indexer", partition: 0, index: SomeIndex, logger: DefaultLogger).run
 ```
 
 ## Delayer
@@ -104,15 +104,7 @@ enough time has passed. Afterwards the delay re-sends the messages to the desire
 topic where an `Indexer` can fetch it and index it like usual.
 
 ```ruby
-KafkaTools::Delayer.new(
-  consumer: KafkaConsumer,
-  producer: KafkaProducer,
-  topic: "delay_5m",
-  partition: 0,
-  delay: 300,
-  delay_topic: "delay_1h",
-  logger: DefaultLogger
-)
+KafkaTools::Delayer.new(consumer: KafkaConsumer, producer: KafkaProducer, topic: "delay_5m", partition: 0, delay: 300, delay_topic: "delay_1h", logger: DefaultLogger).run
 ```
 
 ## Cascader
