@@ -28,7 +28,7 @@ module KafkaTools
     end
 
     def ids(messages)
-      messages.reject { |message| message["cascaded"] }.map { |message| message["id"] }.uniq
+      messages.reject { |message| message.parsed_json["cascaded"] }.map { |message| message.parsed_json["id"] }.uniq
     end
 
     private

@@ -6,9 +6,7 @@ module KafkaTools
         messages.each_slice(250) do |slice|
           producer.batch do |batch|
             slice.each do |message|
-              hash = JSON.parse(message.value)
-
-              diff = hash["created_at"] + delay.to_i - Time.now.utc.to_f
+              diff = message.parsed_json["created_at"] + delay.to_i - Time.now.utc.to_f
 
               if diff > 0 
                 if batch.size > 0
@@ -21,8 +19,8 @@ module KafkaTools
                 sleep(diff + 30) if diff > 0 
               end
 
-              batch.produce(JSON.generate(hash.merge("created_at" => Time.now.utc.to_f)), topic: delay_topic) if delay_topic
-              batch.produce(JSON.generate(hash["payload"]), topic: hash["topic"])
+              batch.produce(JSON.generate(message.parsed_json.merge("created_at" => Time.now.utc.to_f)), topic: delay_topic) if delay_topic
+              batch.produce(JSON.generate(message.parsed_json["payload"]), topic: message.parsed_json["topic"])
             end
 
             logger.debug("Delayed #{batch.size} messages for #{delay} seconds") if batch.size > 0
