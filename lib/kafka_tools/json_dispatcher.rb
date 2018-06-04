@@ -5,7 +5,6 @@ module KafkaTools
       @consumer = consumer
       @topic = topic
       @name = name
-      @target = target
       @logger = logger
     end
 
