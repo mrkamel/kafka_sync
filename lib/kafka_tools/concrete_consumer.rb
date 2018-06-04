@@ -50,7 +50,7 @@ module KafkaTools
       loop do
         messages = @kafka.fetch_messages(topic: @topic, partition: @partition, offset: offset, max_wait_time: 8).map { |message| WrappedMessage.new(message) }
 
-        @block.call(messages) if messages.present?
+        @block.call(messages, self) if messages.size > 0
 
         if messages.last
           offset = messages.last.offset + 1
