@@ -12,6 +12,8 @@ module KafkaTools
     def run
       @consumer.consume(topic: @topic, name: @name) do |messages|
         dispatch(messages.map { |message| message.parsed_json })
+
+        @logger.info "Dispatched #{messages.size} messages for #{@name}"
       end
     end
 
