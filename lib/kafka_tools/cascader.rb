@@ -15,7 +15,7 @@ module KafkaTools
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
-            topic_cache[object.class] ||= object.class.name.pluralize.underscore
+            topic_cache[object.class] ||= object.class.name.pluralize.underscore.gsub("/", "_")
 
             batch.produce JSON.generate(object.kafka_payload.merge(cascaded: true)), topic: topic_cache[object.class]
 

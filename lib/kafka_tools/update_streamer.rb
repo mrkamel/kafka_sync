@@ -60,7 +60,7 @@ module KafkaTools
     private
 
     def topic(object)
-      object.class.name.pluralize.underscore
+      object.class.name.pluralize.underscore.gsub("/", "_")
     end
 
     def enumerable(scope)
