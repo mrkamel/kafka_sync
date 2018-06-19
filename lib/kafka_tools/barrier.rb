@@ -30,12 +30,12 @@ module KafkaTools
 
       true
     end
-  end
 
-  private
+    private
 
-  def zk
-    @zk ||= ZK.new(@zk_hosts)
+    def zk
+      @zk ||= ZK.new(@zk_hosts)
+    end
   end
 end
 
