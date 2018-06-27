@@ -3,6 +3,7 @@ language: ruby
 rvm:
   - 2.3.3
 before_install:
+  - docker-compose --version
   - docker-compose pull
   - docker-compose build
   - docker-compose start
