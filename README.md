@@ -1,5 +1,7 @@
 # KafkaTools
 
+[![Build Status](https://secure.travis-ci.org/mrkamel/kafka_tools.png?branch=master)](http://travis-ci.org/mrkamel/kafka_tools)
+
 Tools for using Apache Kafka. The primary purpose of these tools to be used
 with Kafka is to keep the models from your main database in sync with the
 respective ElasticSearch indexes.

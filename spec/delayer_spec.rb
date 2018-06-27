@@ -7,11 +7,11 @@ RSpec.describe KafkaTools::Delayer do
     target_topic = generate_topic
 
     producer = KafkaTools::Producer.new
-    producer.produce(JSON.generate(payload: "message", created_at: Time.now.utc.to_f - 301, topic: target_topic), topic: source_topic)
+    producer.produce(JSON.generate(payload: "message", created_at: Time.now.utc.to_f - 300, topic: target_topic), topic: source_topic)
 
     consumer = KafkaTools::Consumer.new
 
-    KafkaTools::Delayer.new(topic: source_topic, delay: 300, name: "delayer", consumer: consumer, producer: producer).run
+    KafkaTools::Delayer.new(topic: source_topic, delay: 180, name: "delayer", consumer: consumer, producer: producer).run
 
     sleep 1
 
@@ -56,11 +56,11 @@ RSpec.describe KafkaTools::Delayer do
     delay_topic = generate_topic
 
     producer = KafkaTools::Producer.new
-    producer.produce(JSON.generate(payload: "message", created_at: Time.now.utc.to_f - 301, topic: target_topic), topic: source_topic)
+    producer.produce(JSON.generate(payload: "message", created_at: Time.now.utc.to_f - 300, topic: target_topic), topic: source_topic)
 
     consumer = KafkaTools::Consumer.new
 
-    KafkaTools::Delayer.new(topic: source_topic, delay: 300, name: "delayer", consumer: consumer, producer: producer, delay_topic: delay_topic).run
+    KafkaTools::Delayer.new(topic: source_topic, delay: 180, name: "delayer", consumer: consumer, producer: producer, delay_topic: delay_topic).run
 
     sleep 1
 
