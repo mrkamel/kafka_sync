@@ -16,6 +16,7 @@ require "kafka_tools/json_dispatcher"
 require "connection_pool"
 require "kafka"
 require "zk"
+require "json"
 
 module KafkaTools; end
 

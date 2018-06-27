@@ -19,9 +19,7 @@ module KafkaTools
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
-            topic_cache[object.class] ||= topic(object)
-
-            batch.produce(JSON.generate(payload: object.kafka_payload, created_at: Time.now.utc.to_f, topic: topic_cache[object.class]), topic: "delay_5m")
+            batch.produce(JSON.generate(payload: object.kafka_payload, created_at: Time.now.utc.to_f, topic: topic(object)), topic: "delay_5m")
           end
         end
       end
@@ -35,9 +33,7 @@ module KafkaTools
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
-            topic_cache[object.class] ||= topic(object)
-
-            batch.produce(JSON.generate(object.kafka_payload), topic: topic_cache[object.class])
+            batch.produce(JSON.generate(object.kafka_payload), topic: topic(object))
           end
         end
       end
@@ -60,7 +56,11 @@ module KafkaTools
     private
 
     def topic(object)
-      object.class.name.pluralize.underscore.gsub("/", "_")
+      @topic_cache ||= Hash.new do |hash, key|
+        hash[key] = object.class.name.pluralize.underscore.gsub("/", "_")
+      end
+
+      @topic_cache[object.class]
     end
 
     def enumerable(scope)

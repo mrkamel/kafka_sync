@@ -3,7 +3,7 @@ module KafkaTools
   class TimeoutError < StandardError; end
 
   class Barrier
-    def initialize(zk_hosts:, seed_brokers:, client_id: "kafka_tools", pool_size: 5, pool_timeout: 5, logger: Logger.new("/dev/null"))
+    def initialize(zk_hosts: "127.0.0.1:2181", seed_brokers: ["127.0.0.1:9092"], client_id: "kafka_tools", pool_size: 5, pool_timeout: 5, logger: Logger.new("/dev/null"))
       @zk_hosts = zk_hosts
 
       @kafka_pool = ConnectionPool.new(size: pool_size, timeout: pool_timeout) do
@@ -18,7 +18,7 @@ module KafkaTools
 
       start_time = Time.now.to_f
 
-      until zk.get("/kafka_tools/consumer/#{topic}/#{partition}/#{name}/offset")[0].to_i > offset
+      until current_offset(topic: topic, partition: partition, name: name) > offset
         if Time.now.to_f - start_time > timeout
           @logger.error "Barrier (#{topic}, #{partition}, #{name}) didn't finish within specified timeout (#{timeout})"
 
@@ -35,6 +35,12 @@ module KafkaTools
 
     def zk
       @zk ||= ZK.new(@zk_hosts)
+    end
+
+    def current_offset(topic:, partition:, name:)
+      zk.get("/kafka_tools/consumer/#{topic}/#{partition}/#{name}/offset")[0].to_i
+    rescue ZK::Exceptions::NoNode
+      0
     end
   end
 end

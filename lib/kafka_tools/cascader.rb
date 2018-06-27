@@ -15,9 +15,7 @@ module KafkaTools
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
-            topic_cache[object.class] ||= object.class.name.pluralize.underscore.gsub("/", "_")
-
-            batch.produce JSON.generate(object.kafka_payload.merge(cascaded: true)), topic: topic_cache[object.class]
+            batch.produce JSON.generate(object.kafka_payload.merge(cascaded: true)), topic: topic(object)
 
             count += 1
           end
@@ -32,6 +30,14 @@ module KafkaTools
     end
 
     private
+
+    def topic(object)
+      @topic_cache ||= Hash.new do |hash, key|
+        hash[key] = object.class.name.pluralize.underscore.gsub("/", "_")
+      end
+
+      @topic_cache[object.class]
+    end
 
     def enumerable(scope)
       return scope.find_each if scope.respond_to?(:find_each)
