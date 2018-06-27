@@ -1,5 +1,5 @@
 
-require File.expand_path("../spec_helper", __FILE__)
+require File.expand_path("../../spec_helper", __FILE__)
 
 RSpec.describe KafkaTools::Barrier do
   it "should wait no longer than timeout" do

@@ -1,5 +1,5 @@
 
-require File.expand_path("../spec_helper", __FILE__)
+require File.expand_path("../../spec_helper", __FILE__)
 
 RSpec.describe KafkaTools::Delayer do
   it "should reproduce expired messages" do
@@ -7,13 +7,13 @@ RSpec.describe KafkaTools::Delayer do
     target_topic = generate_topic
 
     producer = KafkaTools::Producer.new
-    producer.produce(JSON.generate(payload: "message", created_at: Time.now.utc.to_f - 300, topic: target_topic), topic: source_topic)
+    producer.produce(JSON.generate(payload: { value: "message" }, created_at: Time.now.utc.to_f - 300, topic: target_topic), topic: source_topic)
 
     consumer = KafkaTools::Consumer.new
 
     KafkaTools::Delayer.new(topic: source_topic, delay: 180, name: "delayer", consumer: consumer, producer: producer).run
 
-    sleep 2
+    sleep 1
 
     result = Concurrent::Array.new
 
@@ -21,9 +21,9 @@ RSpec.describe KafkaTools::Delayer do
       result += messages.map(&:parsed_json)
     end
 
-    sleep 2
+    sleep 1
 
-    expect(result).to eq(["message"])
+    expect(result).to eq([{ "value" => "message" }])
   end
 
   it "should not reproduce not yet expired messages" do
@@ -31,7 +31,7 @@ RSpec.describe KafkaTools::Delayer do
     target_topic = generate_topic
 
     producer = KafkaTools::Producer.new
-    producer.produce(JSON.generate(payload: "message", created_at: Time.now.utc.to_f, topic: target_topic), topic: source_topic)
+    producer.produce(JSON.generate(payload: { value: "message" }, created_at: Time.now.utc.to_f, topic: target_topic), topic: source_topic)
 
     consumer = KafkaTools::Consumer.new
 
@@ -56,7 +56,7 @@ RSpec.describe KafkaTools::Delayer do
     delay_topic = generate_topic
 
     producer = KafkaTools::Producer.new
-    producer.produce(JSON.generate(payload: "message", created_at: Time.now.utc.to_f - 300, topic: target_topic), topic: source_topic)
+    producer.produce(JSON.generate(payload: { value: "message" }, created_at: Time.now.utc.to_f - 300, topic: target_topic), topic: source_topic)
 
     consumer = KafkaTools::Consumer.new
 
@@ -77,8 +77,8 @@ RSpec.describe KafkaTools::Delayer do
 
     sleep 2
 
-    expect(result1).to eq(["message"])
-    expect(result2).to eq(["message"])
+    expect(result1).to eq([{ "value" => "message" }])
+    expect(result2).to eq([{ "value" => "message" }])
   end
 end
 
