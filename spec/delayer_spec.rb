@@ -13,7 +13,7 @@ RSpec.describe KafkaTools::Delayer do
 
     KafkaTools::Delayer.new(topic: source_topic, delay: 180, name: "delayer", consumer: consumer, producer: producer).run
 
-    sleep 1
+    sleep 2
 
     result = Concurrent::Array.new
 
@@ -21,7 +21,7 @@ RSpec.describe KafkaTools::Delayer do
       result += messages.map(&:parsed_json)
     end
 
-    sleep 1
+    sleep 2
 
     expect(result).to eq(["message"])
   end
@@ -62,7 +62,7 @@ RSpec.describe KafkaTools::Delayer do
 
     KafkaTools::Delayer.new(topic: source_topic, delay: 180, name: "delayer", consumer: consumer, producer: producer, delay_topic: delay_topic).run
 
-    sleep 1
+    sleep 2
 
     result1 = Concurrent::Array.new
     result2 = Concurrent::Array.new
@@ -75,7 +75,7 @@ RSpec.describe KafkaTools::Delayer do
       result2 += messages.map(&:parsed_json).map { |message| message["payload"] }
     end
 
-    sleep 1
+    sleep 2
 
     expect(result1).to eq(["message"])
     expect(result2).to eq(["message"])
