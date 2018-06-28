@@ -5,8 +5,8 @@ module KafkaTools
       # nothing
     end
 
-    def wait(*args)
-      # nothing
+    def wait(topic:, name:, partition: 0, poll_interval: 1, timeout: 30)
+      true
     end
   end
 end
