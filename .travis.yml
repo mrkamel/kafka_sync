@@ -4,7 +4,7 @@ rvm:
   - 2.3.3
 before_install:
   - docker-compose up -d
-  - sleep 5
+  - sleep 10
 install:
   - travis_retry bundle install
 script: rspec

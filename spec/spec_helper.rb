@@ -3,13 +3,13 @@ require File.expand_path("../../lib/kafka_tools", __FILE__)
 require "concurrent"
 require "active_record"
 require "factory_bot"
-require "sqlite3"
 require "hashie"
+require "search_flip"
+require "database_cleaner"
 
-ActiveRecord::Base.establish_connection(
-  adapter: "sqlite3",
-  database: ":memory:"
-)
+SearchFlip::Config[:auto_refresh] = true
+
+ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "/tmp/kafka_tools.sqlite3")
 
 module SpecHelper
   def generate_topic
@@ -48,6 +48,29 @@ class Product < ActiveRecord::Base
   update_stream(update_streamer: KafkaTools::UpdateStreamer.new(producer: KafkaTools::Producer.new))
 end
 
+class ProductIndex
+  include SearchFlip::Index
+
+  def self.model
+    Product
+  end
+
+  def self.type_name
+    "products"
+  end
+
+  def self.serialize(product)
+    {
+      id: product.id,
+      title: product.title
+    }
+  end
+end
+
+ProductIndex.delete_index if ProductIndex.index_exists?
+ProductIndex.create_index
+ProductIndex.update_mapping
+
 FactoryBot.define do
   factory :product do
     title "title"
@@ -57,5 +80,17 @@ end
 RSpec.configure do |config|
   config.include SpecHelper
   config.include FactoryBot::Syntax::Methods
+
+  config.before(:suite) do
+    DatabaseCleaner.strategy = :truncation
+  end
+
+  config.around(:each) do |example|
+    DatabaseCleaner.cleaning do
+      example.run
+    end
+
+    ProductIndex.match_all.delete
+  end
 end
 

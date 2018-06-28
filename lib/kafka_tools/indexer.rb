@@ -1,16 +1,17 @@
 
 module KafkaTools
   class Indexer
-    def initialize(consumer:, topic:, name:, index:, logger: Logger.new("/dev/null"))
+    def initialize(consumer:, topic:, name:, partition: 0, index:, logger: Logger.new("/dev/null"))
       @consumer = consumer
       @topic = topic
       @name = name
+      @partition = partition
       @index = index
       @logger = logger
     end
 
     def run
-      @consumer.consume(topic: @topic, name: @name) do |messages|
+      @consumer.consume(topic: @topic, name: @name, partition: @partition) do |messages|
         indexed_messages = messages.index_by { |message| message.parsed_json["id"] }
         ids = indexed_messages.keys
 

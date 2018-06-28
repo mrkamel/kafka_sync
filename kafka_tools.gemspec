@@ -41,6 +41,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "concurrent-ruby"
   spec.add_development_dependency "activerecord"
   spec.add_development_dependency "factory_bot"
-  spec.add_development_dependency "sqlite3"
   spec.add_development_dependency "hashie"
+  spec.add_development_dependency "search_flip"
+  spec.add_development_dependency "database_cleaner"
+  spec.add_development_dependency "sqlite3"
 end

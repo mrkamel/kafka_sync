@@ -1,11 +1,9 @@
 version: '2'
 services:
-  mysql:
-    image: mysql:5.7
-    command: mysqld
-    environment:
-      - MYSQL_ALLOW_EMPTY_PASSWORD=true
-      - MYSQL_ROOT_PASSWORD=''
+  elasticsearch:
+    image: elasticsearch
+    ports:
+      - 9200:9200
   zookeeper:
     image: "wurstmeister/zookeeper"
     ports:
