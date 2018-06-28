@@ -22,6 +22,7 @@ ActiveRecord::Base.connection.execute "DROP TABLE IF EXISTS products"
 
 ActiveRecord::Base.connection.create_table :categories do |t|
   t.string :name
+  t.timestamps
 end
 
 class Category < ActiveRecord::Base
@@ -38,6 +39,7 @@ ActiveRecord::Base.connection.create_table :products do |t|
   t.string :title
   t.integer :category_id
   t.index :category_id
+  t.timestamps
 end
 
 class Product < ActiveRecord::Base
@@ -46,6 +48,10 @@ class Product < ActiveRecord::Base
   belongs_to :category, required: false
 
   update_stream(update_streamer: KafkaTools::UpdateStreamer.new(producer: KafkaTools::Producer.new))
+
+  def kafka_payload
+    { id: id, title: title }
+  end
 end
 
 class ProductIndex
