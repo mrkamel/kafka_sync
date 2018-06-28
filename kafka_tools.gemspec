@@ -39,4 +39,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "concurrent-ruby"
+  spec.add_development_dependency "activerecord"
+  spec.add_development_dependency "factory_bot"
+  spec.add_development_dependency "sqlite3"
+  spec.add_development_dependency "hashie"
 end
