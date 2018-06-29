@@ -26,6 +26,8 @@ ActiveRecord::Base.connection.create_table :categories do |t|
 end
 
 class Category < ActiveRecord::Base
+  include KafkaTools::UpdateStream
+
   has_many :products
 end
 
