@@ -17,6 +17,18 @@ module SpecHelper
   end
 end
 
+class TestDispatcher
+  attr_reader :messages
+
+  def initialize
+    @messages = []
+  end
+
+  def dispatch(messages)
+    @messages += messages
+  end
+end
+
 ActiveRecord::Base.connection.execute "DROP TABLE IF EXISTS categories"
 ActiveRecord::Base.connection.execute "DROP TABLE IF EXISTS products"
 
