@@ -1,7 +1,11 @@
 
 module KafkaTools
   class UpdateStreamer
+    include MonitorMixin
+
     def initialize(producer:)
+      super()
+
       @producer = producer
     end
 
@@ -14,8 +18,6 @@ module KafkaTools
     end
 
     def bulk_delay(scope)
-      topic_cache = {}
-
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
@@ -28,8 +30,6 @@ module KafkaTools
     end
 
     def bulk_queue(scope)
-      topic_cache = {}
-
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
@@ -56,11 +56,13 @@ module KafkaTools
     private
 
     def topic(object)
-      @topic_cache ||= Hash.new do |hash, key|
-        hash[key] = object.class.name.pluralize.underscore.gsub("/", "_")
-      end
+      synchronize do
+        @topic_cache ||= Hash.new do |hash, key|
+          hash[key] = object.class.name.pluralize.underscore.gsub("/", "_")
+        end
 
-      @topic_cache[object.class]
+        @topic_cache[object.class]
+      end
     end
 
     def enumerable(scope)

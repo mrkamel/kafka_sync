@@ -106,9 +106,7 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
-    DatabaseCleaner.cleaning do
-      example.run
-    end
+    DatabaseCleaner.cleaning { example.run }
 
     ProductIndex.match_all.delete
   end

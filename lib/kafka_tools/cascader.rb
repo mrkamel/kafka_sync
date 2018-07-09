@@ -10,8 +10,6 @@ module KafkaTools
     def import(scope)
       count = 0
 
-      topic_cache = {}
-
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
