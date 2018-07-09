@@ -5,6 +5,7 @@ module KafkaTools
       @name = name
       @producer = producer
       @logger = logger
+      @topic_cache = {}
     end
 
     def import(scope)
@@ -30,11 +31,7 @@ module KafkaTools
     private
 
     def topic(object)
-      @topic_cache ||= Hash.new do |hash, key|
-        hash[key] = object.class.name.pluralize.underscore.gsub("/", "_")
-      end
-
-      @topic_cache[object.class]
+      @topic_cache[object.class] ||= object.class.name.pluralize.underscore.gsub("/", "_")
     end
 
     def enumerable(scope)

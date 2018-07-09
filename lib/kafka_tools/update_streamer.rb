@@ -7,6 +7,7 @@ module KafkaTools
       super()
 
       @producer = producer
+      @topic_cache = {}
     end
 
     def bulk(scope)
@@ -57,11 +58,7 @@ module KafkaTools
 
     def topic(object)
       synchronize do
-        @topic_cache ||= Hash.new do |hash, key|
-          hash[key] = object.class.name.pluralize.underscore.gsub("/", "_")
-        end
-
-        @topic_cache[object.class]
+        @topic_cache[object.class] ||= object.class.name.pluralize.underscore.gsub("/", "_")
       end
     end
 
