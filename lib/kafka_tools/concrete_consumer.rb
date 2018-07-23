@@ -17,7 +17,7 @@ module KafkaTools
       end
     end
 
-    def initialize(zk:, kafka:, topic:, name:, partition: 0, logger: Logger.new("/dev/null"), &block)
+    def initialize(zk:, kafka:, topic:, name:, partition: 0, batch_size:, logger: Logger.new("/dev/null"), &block)
       @topic = topic
       @name = name
       @partition = partition
@@ -25,6 +25,7 @@ module KafkaTools
       @kafka = kafka
       @block = block
       @logger = logger
+      @batch_size = batch_size
 
       @zk_path = "/kafka_tools/consumer/#{@topic}/#{@partition}/#{@name}/offset"
     end
@@ -48,12 +49,14 @@ module KafkaTools
       offset = offset.to_s.empty? ? :earliest : offset.to_i
 
       loop do
-        messages = @kafka.fetch_messages(topic: @topic, partition: @partition, offset: offset, max_wait_time: 8).map { |message| WrappedMessage.new(message) }
+        messages = @kafka.fetch_messages(topic: @topic, partition: @partition, offset: offset, max_wait_time: 8).map do |message|
+          WrappedMessage.new(message)
+        end
 
-        @block.call(messages, self) if messages.size > 0
+        messages.each_slice(@batch_size) do |slice|
+          @block.call(slice, self)
 
-        if messages.last
-          offset = messages.last.offset + 1
+          offset = slice.last.offset + 1
 
           commit offset
         end

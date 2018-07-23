@@ -8,11 +8,11 @@ module KafkaTools
       @logger = logger
     end
 
-    def consume(topic:, name:, partition: 0, &block)
+    def consume(topic:, name:, partition: 0, batch_size: 1_000, &block)
       zk = ZK.new(@zk_hosts)
       kafka = Kafka.new(seed_brokers: @seed_brokers, client_id: @client_id)
 
-      ConcreteConsumer.new(zk: zk, kafka: kafka, topic: topic, name: name, partition: partition, logger: @logger, &block).run
+      ConcreteConsumer.new(zk: zk, kafka: kafka, topic: topic, name: name, partition: partition, logger: @logger, batch_size: batch_size, &block).run
     end
   end
 end
