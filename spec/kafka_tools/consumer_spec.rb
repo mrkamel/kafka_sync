@@ -18,6 +18,24 @@ RSpec.describe KafkaTools::Consumer do
     expect(result).to eq(["message"])
   end
 
+  it "should consume messages in batches" do
+    topic = generate_topic
+
+    KafkaTools::Producer.new.produce("message1", topic: topic)
+    KafkaTools::Producer.new.produce("message2", topic: topic)
+    KafkaTools::Producer.new.produce("message3", topic: topic)
+
+    result = Concurrent::Array.new
+
+    KafkaTools::Consumer.new.consume(topic: topic, name: "consumer", batch_size: 2) do |messages|
+      result << messages.map(&:value)
+    end
+
+    sleep 1
+
+    expect(result).to eq([["message1", "message2"], ["message3"]])
+  end
+
   it "should perform leader election" do
     topic = generate_topic
 

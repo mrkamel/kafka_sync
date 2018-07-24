@@ -8,10 +8,10 @@ module KafkaTools
       @topic_cache = {}
     end
 
-    def import(scope)
+    def import(scope, batch_size: 1_000)
       count = 0
 
-      enumerable(scope).each_slice(250) do |slice|
+      enumerable(scope).each_slice(batch_size) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
             batch.produce JSON.generate(object.kafka_payload.merge(cascaded: true)), topic: topic(object)
