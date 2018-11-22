@@ -22,9 +22,9 @@ module KafkaTools
       end
     end
 
-    def initialize(seed_brokers: ["127.0.0.1:9092"], client_id: "kafka_tools", required_acks: -1, pool_size: 5, pool_timeout: 5)
-      @producer_pool = ConnectionPool.new(size: pool_size, timeout: pool_timeout) do
-        Kafka.new(seed_brokers: seed_brokers, client_id: client_id).producer(required_acks: required_acks)
+    def initialize(pool_size: 5)
+      @producer_pool = ConnectionPool.new(pool_size: pool_size) do
+        Kafka.new(seed_brokers: KafkaTools.seed_brokers, client_id: "kafka_tools").producer(required_acks: -1)
       end
     end
 

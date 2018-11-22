@@ -1,35 +1,42 @@
 
 module KafkaTools
   class Delayer
-    def initialize(topic:, name:, delay:, delay_topic: nil, consumer:, producer:, logger: Logger.new("/dev/null"))
+    def initialize(topic:, partition: 0, delay: 300, logger: Logger.new("/dev/null"))
       @topic = topic
-      @name = name
+      @partition = partition
       @delay = delay
-      @delay_topic = delay_topic
-      @consumer = consumer
-      @producer = producer
       @logger = logger
+
+      @consumer = KafkaTools::Consumer.new(
+        topic: "#{@topic}-delay",
+        partition: @partition,
+        name: "#{@topic}-delayer",
+        batch_size: 250,
+        logger: @logger
+      )
+
+      @producer = KafkaTools::Producer.new(pool_size: 1)
     end
 
     def run
-      @consumer.consume(topic: @topic, name: @name, batch_size: 250) do |messages, concrete_consumer|
+      @consumer.run do |messages|
         @producer.batch do |batch|
           messages.each do |message|
-            diff = message.parsed_json["created_at"] + @delay.to_i - Time.now.utc.to_f
+            diff = message.payload["created_at"] + @delay.to_i - Time.now.utc.to_f
 
             if diff > 0
               if batch.size > 0
                 @logger.debug "Delayed #{batch.size} messages for #{@delay} seconds"
 
                 batch.deliver
-                concrete_consumer.commit message.offset
+
+                @consumer.commit message.offset
               end
 
-              sleep(diff + 30) if diff > 0
+              sleep(diff + 1)
             end
 
-            batch.produce(JSON.generate(message.parsed_json.merge("created_at" => Time.now.utc.to_f)), topic: @delay_topic) if @delay_topic
-            batch.produce(JSON.generate(message.parsed_json["payload"]), topic: message.parsed_json["topic"])
+            batch.produce JSON.generate(message.payload["payload"]), topic: @topic, partition: @partition
           end
 
           @logger.debug("Delayed #{batch.size} messages for #{@delay} seconds") if batch.size > 0
@@ -38,5 +45,4 @@ module KafkaTools
     end
   end
 end
-
 

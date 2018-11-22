@@ -1,14 +1,14 @@
 
 require File.expand_path("../../spec_helper", __FILE__)
 
-RSpec.describe KafkaTools::UpdateStream do
+RSpec.describe KafkaTools::Model do
   it "should use kafka_payload" do
     create :product, title: "title1"
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new.consume(topic: "products", name: "update_stream_kafka_payload_consumer") do |messages|
-      result += messages.map(&:parsed_json)
+    KafkaTools::Consumer.new(topic: "products", name: SecureRandom.hex).run do |messages|
+      result += messages.map(&:payload)
     end
 
     sleep 1
@@ -34,7 +34,7 @@ RSpec.describe KafkaTools::UpdateStream do
 
     count = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new.consume(topic: "delay_5m", name: "update_stream_after_safe_consumer") do |messages|
+    KafkaTools::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
       count.increment messages.size
     end
 
@@ -48,7 +48,7 @@ RSpec.describe KafkaTools::UpdateStream do
 
     count = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new.consume(topic: "delay_5m", name: "update_stream_after_touch_consumer") do |messages|
+    KafkaTools::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
       count.increment messages.size
     end
 
@@ -62,7 +62,7 @@ RSpec.describe KafkaTools::UpdateStream do
 
     count = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new.consume(topic: "delay_5m", name: "update_stream_after_destroy_consumer") do |messages|
+    KafkaTools::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
       count.increment messages.size
     end
 
@@ -76,7 +76,7 @@ RSpec.describe KafkaTools::UpdateStream do
 
     count = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new.consume(topic: "delay_5m", name: "update_stream_after_commit_consumer") do |messages|
+    KafkaTools::Consumer.new(topic: "products", name: SecureRandom.hex).run do |messages|
       count.increment messages.size
     end
 

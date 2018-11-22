@@ -9,7 +9,7 @@ RSpec.describe KafkaTools::Producer do
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new.consume(topic: topic, name: "consumer") do |messages|
+    KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
       result += messages.map(&:value)
     end
 
@@ -30,7 +30,7 @@ RSpec.describe KafkaTools::Producer do
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new.consume(topic: topic, name: "consumer") do |messages|
+    KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
       result += messages.map(&:value)
     end
 

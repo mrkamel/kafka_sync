@@ -38,7 +38,7 @@ ActiveRecord::Base.connection.create_table :categories do |t|
 end
 
 class Category < ActiveRecord::Base
-  include KafkaTools::UpdateStream
+  include KafkaTools::Model
 
   has_many :products
 end
@@ -57,43 +57,20 @@ ActiveRecord::Base.connection.create_table :products do |t|
 end
 
 class Product < ActiveRecord::Base
-  include KafkaTools::UpdateStream
+  include KafkaTools::Model
 
   belongs_to :category, required: false
 
-  update_stream(update_streamer: KafkaTools::UpdateStreamer.new(producer: KafkaTools::Producer.new))
+  kafka_stream
 
   def kafka_payload
     { id: id, title: title }
   end
 end
 
-class ProductIndex
-  include SearchFlip::Index
-
-  def self.model
-    Product
-  end
-
-  def self.type_name
-    "products"
-  end
-
-  def self.serialize(product)
-    {
-      id: product.id,
-      title: product.title
-    }
-  end
-end
-
-ProductIndex.delete_index if ProductIndex.index_exists?
-ProductIndex.create_index
-ProductIndex.update_mapping
-
 FactoryBot.define do
   factory :product do
-    title "title"
+    title { "title" }
   end
 end
 
@@ -107,8 +84,6 @@ RSpec.configure do |config|
 
   config.around(:each) do |example|
     DatabaseCleaner.cleaning { example.run }
-
-    ProductIndex.match_all.delete
   end
 end
 

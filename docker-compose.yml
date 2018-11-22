@@ -1,9 +1,5 @@
 version: '2'
 services:
-  elasticsearch:
-    image: elasticsearch
-    ports:
-      - 9200:9200
   zookeeper:
     image: "wurstmeister/zookeeper"
     ports:

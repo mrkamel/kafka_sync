@@ -9,7 +9,7 @@ RSpec.describe KafkaTools::Consumer do
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new.consume(topic: topic, name: "consumer") do |messages|
+    KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
       result += messages.map(&:value)
     end
 
@@ -27,7 +27,7 @@ RSpec.describe KafkaTools::Consumer do
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new.consume(topic: topic, name: "consumer", batch_size: 2) do |messages|
+    KafkaTools::Consumer.new(topic: topic, name: "consumer", batch_size: 2).run do |messages|
       result << messages.map(&:value)
     end
 
@@ -44,11 +44,11 @@ RSpec.describe KafkaTools::Consumer do
     result1 = Concurrent::Array.new
     result2 = Concurrent::Array.new
 
-    KafkaTools::Consumer.new.consume(topic: topic, name: "consumer") do |messages|
+    KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
       result1 += messages.map(&:value)
     end
 
-    KafkaTools::Consumer.new.consume(topic: topic, name: "consumer") do |messages|
+    KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
       result2 += messages.map(&:value)
     end
 
@@ -66,7 +66,7 @@ RSpec.describe KafkaTools::Consumer do
     result = Concurrent::Array.new
 
     pid = fork do
-      KafkaTools::Consumer.new.consume(topic: topic, name: "consumer") do |messages|
+      KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
         # nothing
       end
 
@@ -80,7 +80,7 @@ RSpec.describe KafkaTools::Consumer do
 
     sleep 5
 
-    KafkaTools::Consumer.new.consume(topic: topic, name: "consumer") do |messages|
+    KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
       result += messages.map(&:value)
     end
 

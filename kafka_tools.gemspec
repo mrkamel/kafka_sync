@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Benjamin Vetter"]
   spec.email         = ["vetter@plainpicture.de"]
 
-  spec.summary       = %q{A collection of kafka tools}
-  spec.description   = %q{A collection of kafka tools}
+  spec.summary       = %q{Using Kafka to keep your primary datastore in sync with secondary datastores}
+  spec.description   = %q{Using Kafka to keep your primary datastore in sync with secondary datastores}
   spec.homepage      = "https://github.com/mrkamel/kafka_tools"
   spec.license       = "MIT"
 
@@ -42,7 +42,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "activerecord"
   spec.add_development_dependency "factory_bot"
   spec.add_development_dependency "hashie"
-  spec.add_development_dependency "search_flip"
   spec.add_development_dependency "database_cleaner"
   spec.add_development_dependency "sqlite3"
 end

@@ -1,13 +1,12 @@
 
 module KafkaTools
-  class UpdateStreamer
-    include MonitorMixin
+  class Streamer
+    def initialize(partitions: [0])
+      @producer = KafkaTools::Producer.new
+      @partitions = partitions
 
-    def initialize(producer:)
-      super()
-
-      @producer = producer
       @topic_cache = {}
+      @topic_cache_mutex = Mutex.new
     end
 
     def bulk(scope)
@@ -22,7 +21,7 @@ module KafkaTools
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
-            batch.produce(JSON.generate(payload: object.kafka_payload, created_at: Time.now.utc.to_f, topic: topic(object)), topic: "delay_5m")
+            batch.produce JSON.generate(payload: object.kafka_payload, created_at: Time.now.to_f), topic: "#{topic(object)}-delay", partition: @partitions.sample
           end
         end
       end
@@ -34,7 +33,7 @@ module KafkaTools
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
-            batch.produce(JSON.generate(object.kafka_payload), topic: topic(object))
+            batch.produce JSON.generate(object.kafka_payload), topic: topic(object), partition: @partitions.sample
           end
         end
       end
@@ -43,13 +42,13 @@ module KafkaTools
     end
 
     def queue(object)
-      @producer.produce JSON.generate(object.kafka_payload), topic: topic(object)
+      @producer.produce JSON.generate(object.kafka_payload), topic: topic(object), partition: @partitions.sample
 
       true
     end
 
     def delay(object)
-      @producer.produce JSON.generate(payload: object.kafka_payload, created_at: Time.now.utc.to_f, topic: topic(object)), topic: "delay_5m"
+      @producer.produce JSON.generate(payload: object.kafka_payload, created_at: Time.now.to_f), topic: "#{topic(object)}-delay", partition: @partitions.sample
 
       true
     end
@@ -57,7 +56,7 @@ module KafkaTools
     private
 
     def topic(object)
-      synchronize do
+      @topic_cache_mutex.synchronize do
         @topic_cache[object.class] ||= object.class.name.pluralize.underscore.gsub("/", "_")
       end
     end
