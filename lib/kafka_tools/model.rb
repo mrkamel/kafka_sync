@@ -16,7 +16,7 @@ module KafkaTools
       end
 
       def kafka_topic
-        name.pluralize.underscore.tr("/", ":")
+        name.pluralize.underscore.tr("/", ".")
       end
     end
 
