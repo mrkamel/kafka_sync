@@ -1,6 +1,6 @@
 # KafkaSync
 
-**Using Kafka to keep secondary datastores in sync with your primary datastore**
+**Using Apache Kafka to keep secondary datastores in sync with your primary datastore**
 
 [![Build Status](https://secure.travis-ci.org/mrkamel/kafka_sync.png?branch=master)](http://travis-ci.org/mrkamel/kafka_sync)
 
