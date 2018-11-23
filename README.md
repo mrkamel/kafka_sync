@@ -13,7 +13,7 @@ This works like follows:
 class MyModel < ActiveRecord::Base
   include KafkaSync::Model
 
-  kafka_stream
+  kafka_sync
 end
 ```
 
@@ -73,7 +73,7 @@ The `KafkaSync::Model` module installs model lifecycle methods.
 class MyModel < ActiveRecord::Base
   include KafkaSync::Model
 
-  kafka_stream
+  kafka_sync
 end
 ```
 
