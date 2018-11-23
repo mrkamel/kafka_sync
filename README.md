@@ -1,13 +1,14 @@
 # KafkaSync
 
-**Using Apache Kafka to keep secondary datastores in sync with your primary datastore**
+**Using Kafka to keep secondary datastores in sync with your primary datastore**
 
 [![Build Status](https://secure.travis-ci.org/mrkamel/kafka_sync.png?branch=master)](http://travis-ci.org/mrkamel/kafka_sync)
 
-Sync for using Apache Kafka. The primary purpose is to keep your secondary
-datastores like, e.g.  ElasticSearch indexes, consistent with your models.
+Simply stated, the primary purpose of KafkaSync is to keep your secondary
+datastores (ElasticSearch, cache stores, etc.) consistent with the models
+stored in your primary datastore (MySQL, Postgres, etc).
 
-This works like follows:
+Getting started is easy:
 
 ```ruby
 class MyModel < ActiveRecord::Base
@@ -17,9 +18,9 @@ class MyModel < ActiveRecord::Base
 end
 ```
 
-This installs model lifecycle callbacks, i.e. `after_save`, `after_touch`,
-`after_destroy` and `after_commit`. These send messages to kafka, having a
-(customizable) payload:
+`kafka_sync` installs model lifecycle callbacks, i.e. `after_save`,
+`after_touch`, `after_destroy` and, most importantly, `after_commit`. The
+callbacks send messages to kafka, having a (customizable) payload:
 
 ```ruby
 def kafka_payload
@@ -27,20 +28,19 @@ def kafka_payload
 end
 ```
 
-such that background workers can fetch the messages in batches and update
-secondary datastore(s). However, `after_save`, `after_touch` and
-`after_destroy` only send a delay message to kafka. These delay messages don't
-have to be fetched immediately but instead after e.g. 5 minutes. This provides
-a safety net for cases where something crashes in between the database commit
-and the `after_commit` callback. Checkout the `Delayer` for details. Only the
-`after_commit` callback sends a message to kafka which can be fetched
-immediately such that secondary data store can be updated in near-realtime. If
-something crashes in between, the delay message will be fetched after 5 minutes
-and fix the inconsistency.
-
-Due to the combination of delay messages and instant messages, you won't have
-to to do a full re-index after server crashes again, because your secondary
-datastore will be self-healing.
+Now, background workers can fetch the messages in batches and update the
+secondary datastores. However, `after_save`, `after_touch` and `after_destroy`
+only send "delay messages" to kafka. These delay messages should not be fetched
+immediately. Instead, they should be fetched after e.g. 5 minutes. Only the
+`after_commit` callback is sending messages to kafka which can be fetched
+immediately by background workers. The delay messages provide a safety net for
+cases when something crashes in between the database commit and the
+`after_commit` callback. Contrary, the purpose of messages send to Kafka from
+within the `after_commit` callback is to keep the secondary data store updated
+in near-realtime when everything is working without any issues. Due to the
+combination of delay messages and instant messages, you won't have to to do a
+full re-index after server crashes again, because your secondary datastores
+will be self-healing.
 
 ## Installation
 
@@ -114,16 +114,19 @@ KafkaSync::Delayer.new(topic: MyModel.kafka_topic, partition: 0, delay: 300, log
 
 ## Streamer
 
-The `KafkaSync:Streamer` actually sends the the delay as well as instant messages to Kafka
-and is required for cases where you're using `#update_all`, `#delete_all`, etc.
+The `KafkaSync:Streamer` actually sends the the delay as well as instant
+messages to Kafka and is required for cases where you're using `#update_all`,
+`#delete_all`, etc. As you might now, `#update_all`, etc. is by-passing any
+model lifecycle callbacks, such that you need to tell KafkaSync about those
+updates.
 
-You need to change:
+More concretely, you need to change:
 
 ```ruby
 Product.where(on_stock: true).update_all(featured: true)
 ```
 
-to
+to the following:
 
 ```ruby
 KafkaStreamer = KafkaSync::Streamer.new
