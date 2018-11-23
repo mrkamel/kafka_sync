@@ -1,5 +1,5 @@
 
-module KafkaTools
+module KafkaSync
   class Consumer
     class WrappedMessage
       extend Forwardable
@@ -22,7 +22,7 @@ module KafkaTools
       @batch_size = batch_size
       @logger = logger
 
-      @zk_path = "/kafka_tools/consumer/#{@topic}/#{@partition}/#{@name}/offset"
+      @zk_path = "/kafka_sync/consumer/#{@topic}/#{@partition}/#{@name}/offset"
     end
 
     def current_offset
@@ -44,9 +44,9 @@ module KafkaTools
     end
 
     def run(&block)
-     leader_election = KafkaTools::LeaderElection.new(
-        zk: ZK.new(KafkaTools.zk_hosts),
-        path: "/kafka_tools/consumer/#{@topic}/#{@partition}/#{@name}/leader",
+     leader_election = KafkaSync::LeaderElection.new(
+        zk: ZK.new(KafkaSync.zk_hosts),
+        path: "/kafka_sync/consumer/#{@topic}/#{@partition}/#{@name}/leader",
         value: `hostname`,
         logger: @logger
       )
@@ -58,11 +58,11 @@ module KafkaTools
     private
 
     def zk
-      @zk ||= ZK.new(KafkaTools.zk_hosts)
+      @zk ||= ZK.new(KafkaSync.zk_hosts)
     end
 
     def kafka
-      @kafka ||= Kafka.new(seed_brokers: KafkaTools.seed_brokers, client_id: "kafka_tools")
+      @kafka ||= Kafka.new(seed_brokers: KafkaSync.seed_brokers, client_id: "kafka_sync")
     end
 
     def work(&block)

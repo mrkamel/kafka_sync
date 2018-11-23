@@ -1,3 +1,3 @@
-module KafkaTools
+module KafkaSync
   VERSION = "0.1.0"
 end

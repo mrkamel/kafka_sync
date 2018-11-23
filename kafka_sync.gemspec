@@ -1,17 +1,17 @@
 # coding: utf-8
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "kafka_tools/version"
+require "kafka_sync/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "kafka_tools"
-  spec.version       = KafkaTools::VERSION
+  spec.name          = "kafka_sync"
+  spec.version       = KafkaSync::VERSION
   spec.authors       = ["Benjamin Vetter"]
   spec.email         = ["vetter@plainpicture.de"]
 
-  spec.summary       = %q{Using Kafka to keep your primary datastore in sync with secondary datastores}
-  spec.description   = %q{Using Kafka to keep your primary datastore in sync with secondary datastores}
-  spec.homepage      = "https://github.com/mrkamel/kafka_tools"
+  spec.summary       = %q{Using Kafka to keep secondary datastores in sync with your primary datastore}
+  spec.description   = %q{Using Kafka to keep secondary datastores in sync with your primary datastore}
+  spec.homepage      = "https://github.com/mrkamel/kafka_sync"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'

@@ -1,17 +1,17 @@
-# KafkaTools
+# KafkaSync
 
-**Using Kafka to keep your primary datastore in sync with secondary datastores**
+**Using Kafka to keep secondary datastores in sync with your primary datastore**
 
-[![Build Status](https://secure.travis-ci.org/mrkamel/kafka_tools.png?branch=master)](http://travis-ci.org/mrkamel/kafka_tools)
+[![Build Status](https://secure.travis-ci.org/mrkamel/kafka_sync.png?branch=master)](http://travis-ci.org/mrkamel/kafka_sync)
 
-Tools for using Apache Kafka. The primary purpose is to keep your secondary
+Sync for using Apache Kafka. The primary purpose is to keep your secondary
 datastores like, e.g.  ElasticSearch indexes, consistent with your models.
 
 This works like follows:
 
 ```ruby
 class MyModel < ActiveRecord::Base
-  include KafkaTools::Model
+  include KafkaSync::Model
 
   kafka_stream
 end
@@ -47,7 +47,7 @@ datastore will be self-healing.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'kafka_tools'
+gem 'kafka_sync'
 ```
 
 And then execute:
@@ -56,22 +56,22 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install kafka_tools
+    $ gem install kafka_sync
 
 Afterwards, you need to specify how to connect to kafka as well as zokeeper:
 
 ```ruby
-KafkaTools.seed_brokers = ["127.0.0.1:9092"]
-KafkaTools.zk_hosts = "127.0.0.1:1281"
+KafkaSync.seed_brokers = ["127.0.0.1:9092"]
+KafkaSync.zk_hosts = "127.0.0.1:1281"
 ```
 
 ## Model
 
-The `KafkaTools::Model` module installs model lifecycle methods.
+The `KafkaSync::Model` module installs model lifecycle methods.
 
 ```ruby
 class MyModel < ActiveRecord::Base
-  include KafkaTools::Model
+  include KafkaSync::Model
 
   kafka_stream
 end
@@ -82,7 +82,7 @@ end
 ```ruby
 DefaultLogger = Logger.new(STDOUT)
 
-KafkaTools::Consumer.new(topic: "products", partition: 0, name: "consumer", logger: DefaultLogger).run do |messages|
+KafkaSync::Consumer.new(topic: "products", partition: 0, name: "consumer", logger: DefaultLogger).run do |messages|
   # ...
 end
 ```
@@ -92,11 +92,11 @@ then you must use distinct names. Assume you have an indexer, which updates a
 search index for a model and a cacher, which updates a cache store for a model:
 
 ```ruby
-KafkaTools::Consumer.new(topic: MyModel.kafka_topic, partition: 0, name: "indexer", logger: DefaultLogger).run do |messages|
+KafkaSync::Consumer.new(topic: MyModel.kafka_topic, partition: 0, name: "indexer", logger: DefaultLogger).run do |messages|
   # ...
 end
 
-KafkaTools::Consumer.new(topic: MyModel.kafka_topic, partition: 0, name: "cacher", logger: DefaultLogger).run do |messages|
+KafkaSync::Consumer.new(topic: MyModel.kafka_topic, partition: 0, name: "cacher", logger: DefaultLogger).run do |messages|
   # ...
 end
 ```
@@ -109,12 +109,12 @@ enough time has passed. Afterwards the delay re-sends the messages to the desire
 topic where an `Indexer` can fetch it and index it like usual.
 
 ```ruby
-KafkaTools::Delayer.new(topic: MyModel.kafka_topic, partition: 0, delay: 300, logger: DefaultLogger).run
+KafkaSync::Delayer.new(topic: MyModel.kafka_topic, partition: 0, delay: 300, logger: DefaultLogger).run
 ```
 
 ## Streamer
 
-The `KafkaTools:Streamer` actually sends the the delay as well as instant messages to Kafka
+The `KafkaSync:Streamer` actually sends the the delay as well as instant messages to Kafka
 and is required for cases where you're using `#update_all`, `#delete_all`, etc.
 
 You need to change:
@@ -126,7 +126,7 @@ Product.where(on_stock: true).update_all(featured: true)
 to
 
 ```ruby
-KafkaStreamer = KafkaTools::Streamer.new
+KafkaStreamer = KafkaSync::Streamer.new
 
 Product.where(on_stock: true).find_in_batches do |products|
   KafkaStreamer.bulk products do
@@ -137,7 +137,7 @@ end
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/mrkamel/kafka_tools.
+Bug reports and pull requests are welcome on GitHub at https://github.com/mrkamel/kafka_sync.
 
 ## License
 

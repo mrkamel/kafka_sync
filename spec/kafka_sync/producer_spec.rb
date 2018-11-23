@@ -1,15 +1,15 @@
 
 require File.expand_path("../../spec_helper", __FILE__)
 
-RSpec.describe KafkaTools::Producer do
+RSpec.describe KafkaSync::Producer do
   it "should produce consumable messages" do
     topic = generate_topic
 
-    KafkaTools::Producer.new.produce("message", topic: topic)
+    KafkaSync::Producer.new.produce("message", topic: topic)
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
+    KafkaSync::Consumer.new(topic: topic, name: "consumer").run do |messages|
       result += messages.map(&:value)
     end
 
@@ -21,7 +21,7 @@ RSpec.describe KafkaTools::Producer do
   it "should allow batching" do
     topic = generate_topic
 
-    producer = KafkaTools::Producer.new
+    producer = KafkaSync::Producer.new
 
     producer.batch do |batch|
       batch.produce("message1", topic: topic)
@@ -30,7 +30,7 @@ RSpec.describe KafkaTools::Producer do
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new(topic: topic, name: "consumer").run do |messages|
+    KafkaSync::Consumer.new(topic: topic, name: "consumer").run do |messages|
       result += messages.map(&:value)
     end
 

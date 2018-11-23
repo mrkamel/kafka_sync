@@ -1,7 +1,7 @@
 
 require "securerandom"
 
-module KafkaTools
+module KafkaSync
   class LeaderElection
     include MonitorMixin
 

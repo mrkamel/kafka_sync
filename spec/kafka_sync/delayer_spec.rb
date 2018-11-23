@@ -1,20 +1,20 @@
 
 require File.expand_path("../../spec_helper", __FILE__)
 
-RSpec.describe KafkaTools::Delayer do
+RSpec.describe KafkaSync::Delayer do
   it "should reproduce expired messages" do
     topic = generate_topic
 
-    producer = KafkaTools::Producer.new
+    producer = KafkaSync::Producer.new
     producer.produce(JSON.generate(payload: { value: "message" }, created_at: Time.now.to_f - 300), topic: "#{topic}-delay")
 
-    KafkaTools::Delayer.new(topic: topic, delay: 180).run
+    KafkaSync::Delayer.new(topic: topic, delay: 180).run
 
     sleep 1
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new(topic: topic, name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: topic, name: SecureRandom.hex).run do |messages|
       result += messages.map(&:payload)
     end
 
@@ -26,16 +26,16 @@ RSpec.describe KafkaTools::Delayer do
   it "should not reproduce not yet expired messages" do
     topic = generate_topic
 
-    producer = KafkaTools::Producer.new
+    producer = KafkaSync::Producer.new
     producer.produce(JSON.generate(payload: { value: "message" }, created_at: Time.now.to_f), topic: "#{topic}-delay")
 
-    KafkaTools::Delayer.new(topic: topic, delay: 300).run
+    KafkaSync::Delayer.new(topic: topic, delay: 300).run
 
     sleep 1
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new(topic: topic, name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: topic, name: SecureRandom.hex).run do |messages|
       result += messages.map(&:payload)
     end
 

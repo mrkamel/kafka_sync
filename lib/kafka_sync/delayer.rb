@@ -1,5 +1,5 @@
 
-module KafkaTools
+module KafkaSync
   class Delayer
     def initialize(topic:, partition: 0, delay: 300, logger: Logger.new("/dev/null"))
       @topic = topic
@@ -7,7 +7,7 @@ module KafkaTools
       @delay = delay
       @logger = logger
 
-      @consumer = KafkaTools::Consumer.new(
+      @consumer = KafkaSync::Consumer.new(
         topic: "#{@topic}-delay",
         partition: @partition,
         name: "delayer",
@@ -15,7 +15,7 @@ module KafkaTools
         logger: @logger
       )
 
-      @producer = KafkaTools::Producer.new(pool_size: 1)
+      @producer = KafkaSync::Producer.new(pool_size: 1)
     end
 
     def run

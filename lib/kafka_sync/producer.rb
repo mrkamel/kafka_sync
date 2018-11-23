@@ -1,5 +1,5 @@
 
-module KafkaTools
+module KafkaSync
   class Producer
     class Batch
       def initialize(producer)
@@ -24,7 +24,7 @@ module KafkaTools
 
     def initialize(pool_size: 5)
       @producer_pool = ConnectionPool.new(pool_size: pool_size) do
-        Kafka.new(seed_brokers: KafkaTools.seed_brokers, client_id: "kafka_tools").producer(required_acks: -1)
+        Kafka.new(seed_brokers: KafkaSync.seed_brokers, client_id: "kafka_sync").producer(required_acks: -1)
       end
     end
 

@@ -1,7 +1,7 @@
 
-module KafkaTools
+module KafkaSync
   class Streamer
-    def initialize(partitions: [0], producer: KafkaTools::Producer.new)
+    def initialize(partitions: [0], producer: KafkaSync::Producer.new)
       @producer = producer
       @partitions = partitions
 

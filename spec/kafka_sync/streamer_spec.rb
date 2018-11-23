@@ -1,15 +1,15 @@
 
 require File.expand_path("../../spec_helper", __FILE__)
 
-RSpec.describe KafkaTools::Streamer do
-  let(:streamer) { KafkaTools::Streamer.new }
+RSpec.describe KafkaSync::Streamer do
+  let(:streamer) { KafkaSync::Streamer.new }
 
   it "should produce messages to the delay topic in bulk mode" do
     streamer.delay create(:category)
 
     result = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new(topic: "categories-delay", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "categories-delay", name: SecureRandom.hex).run do |messages|
       result.increment(messages.size)
     end
 
@@ -23,7 +23,7 @@ RSpec.describe KafkaTools::Streamer do
 
     result = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new(topic: "categories", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "categories", name: SecureRandom.hex).run do |messages|
       result.increment(messages.size)
     end
 
@@ -37,7 +37,7 @@ RSpec.describe KafkaTools::Streamer do
 
     result = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new(topic: "categories-delay", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "categories-delay", name: SecureRandom.hex).run do |messages|
       result.increment(messages.size)
     end
 
@@ -58,7 +58,7 @@ RSpec.describe KafkaTools::Streamer do
 
     result = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new(topic: "categories", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "categories", name: SecureRandom.hex).run do |messages|
       result.increment(messages.size)
     end
 

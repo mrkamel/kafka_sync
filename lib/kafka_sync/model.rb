@@ -1,5 +1,5 @@
 
-module KafkaTools
+module KafkaSync
   module Model
     def self.included(base)
       base.extend(ClassMethods)
@@ -7,7 +7,7 @@ module KafkaTools
 
     module ClassMethods
       def kafka_stream(partitions: [0])
-        streamer = KafkaTools::Streamer.new(partitions: partitions)
+        streamer = KafkaSync::Streamer.new(partitions: partitions)
 
         after_save { |object| streamer.delay object }
         after_touch { |object| streamer.delay object }

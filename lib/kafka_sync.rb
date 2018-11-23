@@ -5,15 +5,15 @@ require "securerandom"
 require "connection_pool"
 require "kafka"
 require "zk"
-require "kafka_tools/version"
-require "kafka_tools/leader_election"
-require "kafka_tools/consumer"
-require "kafka_tools/producer"
-require "kafka_tools/delayer"
-require "kafka_tools/streamer"
-require "kafka_tools/model"
+require "kafka_sync/version"
+require "kafka_sync/leader_election"
+require "kafka_sync/consumer"
+require "kafka_sync/producer"
+require "kafka_sync/delayer"
+require "kafka_sync/streamer"
+require "kafka_sync/model"
 
-module KafkaTools
+module KafkaSync
   class << self
     attr_accessor :seed_brokers, :zk_hosts
   end
@@ -29,7 +29,7 @@ module KafkaTools
 
   def self.kafka_pool
     @kafka_pool ||= ConnectionPool.new do
-      Kafka.new(seed_brokers: seed_brokers, client_id: "kafka_tools")
+      Kafka.new(seed_brokers: seed_brokers, client_id: "kafka_sync")
     end
   end
 end

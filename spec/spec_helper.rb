@@ -1,11 +1,11 @@
 
-require File.expand_path("../../lib/kafka_tools", __FILE__)
+require File.expand_path("../../lib/kafka_sync", __FILE__)
 require "concurrent"
 require "active_record"
 require "factory_bot"
 require "database_cleaner"
 
-ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "/tmp/kafka_tools.sqlite3")
+ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "/tmp/kafka_sync.sqlite3")
 
 module SpecHelper
   def generate_topic
@@ -34,7 +34,7 @@ ActiveRecord::Base.connection.create_table :categories do |t|
 end
 
 class Category < ActiveRecord::Base
-  include KafkaTools::Model
+  include KafkaSync::Model
 
   has_many :products
 end
@@ -53,7 +53,7 @@ ActiveRecord::Base.connection.create_table :products do |t|
 end
 
 class Product < ActiveRecord::Base
-  include KafkaTools::Model
+  include KafkaSync::Model
 
   belongs_to :category, required: false
 

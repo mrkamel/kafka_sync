@@ -1,7 +1,7 @@
 
 require File.expand_path("../../spec_helper", __FILE__)
 
-RSpec.describe KafkaTools::Model do
+RSpec.describe KafkaSync::Model do
   it "should specify the topic" do
     expect(Product.kafka_topic).to eq("products")
   end
@@ -11,7 +11,7 @@ RSpec.describe KafkaTools::Model do
 
     result = Concurrent::Array.new
 
-    KafkaTools::Consumer.new(topic: "products", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "products", name: SecureRandom.hex).run do |messages|
       result += messages.map(&:payload)
     end
 
@@ -38,7 +38,7 @@ RSpec.describe KafkaTools::Model do
 
     count = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
       count.increment messages.size
     end
 
@@ -52,7 +52,7 @@ RSpec.describe KafkaTools::Model do
 
     count = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
       count.increment messages.size
     end
 
@@ -66,7 +66,7 @@ RSpec.describe KafkaTools::Model do
 
     count = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "products-delay", name: SecureRandom.hex).run do |messages|
       count.increment messages.size
     end
 
@@ -80,7 +80,7 @@ RSpec.describe KafkaTools::Model do
 
     count = Concurrent::AtomicFixnum.new
 
-    KafkaTools::Consumer.new(topic: "products", name: SecureRandom.hex).run do |messages|
+    KafkaSync::Consumer.new(topic: "products", name: SecureRandom.hex).run do |messages|
       count.increment messages.size
     end
 
