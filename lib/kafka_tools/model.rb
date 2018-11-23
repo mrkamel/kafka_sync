@@ -14,6 +14,10 @@ module KafkaTools
         after_destroy { |object| streamer.delay object }
         after_commit { |object| streamer.queue object }
       end
+
+      def kafka_topic
+        name.pluralize.underscore.tr("/", "-")
+      end
     end
 
     def kafka_payload

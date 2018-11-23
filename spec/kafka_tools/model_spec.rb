@@ -2,6 +2,10 @@
 require File.expand_path("../../spec_helper", __FILE__)
 
 RSpec.describe KafkaTools::Model do
+  it "should specify the topic" do
+    expect(Product.kafka_topic).to eq("products")
+  end
+
   it "should use kafka_payload" do
     create :product, title: "title1"
 

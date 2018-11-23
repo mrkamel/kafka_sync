@@ -57,7 +57,7 @@ module KafkaTools
 
     def topic(object)
       @topic_cache_mutex.synchronize do
-        @topic_cache[object.class] ||= object.class.name.pluralize.underscore.gsub("/", "_")
+        @topic_cache[object.class] ||= object.class.kafka_topic
       end
     end
 
