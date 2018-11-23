@@ -128,7 +128,6 @@ to
 ```ruby
 KafkaStreamer = KafkaTools::Streamer.new
 
-```ruby
 Product.where(on_stock: true).find_in_batches do |products|
   KafkaStreamer.bulk products do
     Product.where(id: products.map(&:id)).update_all(featured: true)
