@@ -114,8 +114,8 @@ KafkaSync::Delayer.new(topic: MyModel.kafka_topic, partition: 0, delay: 300, log
 
 ## Streamer
 
-The `KafkaSync:Streamer` actually sends the the delay as well as instant
-messages to Kafka and is required for cases where you're using `#update_all`,
+The `KafkaSync:Streamer` actually sends the delay as well as instant messages
+to Kafka and is required for cases where you're using `#update_all`,
 `#delete_all`, etc. As you might now, `#update_all`, etc. is by-passing any
 model lifecycle callbacks, such that you need to tell KafkaSync about those
 updates.
