@@ -31,7 +31,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "ruby-kafka"
-  spec.add_dependency "hashie"
   spec.add_dependency "zk"
   spec.add_dependency "connection_pool"
 
@@ -41,7 +40,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "concurrent-ruby"
   spec.add_development_dependency "activerecord"
   spec.add_development_dependency "factory_bot"
-  spec.add_development_dependency "hashie"
   spec.add_development_dependency "database_cleaner"
   spec.add_development_dependency "sqlite3"
 end

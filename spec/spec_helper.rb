@@ -4,10 +4,7 @@ require "concurrent"
 require "active_record"
 require "factory_bot"
 require "hashie"
-require "search_flip"
 require "database_cleaner"
-
-SearchFlip::Config[:auto_refresh] = true
 
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "/tmp/kafka_tools.sqlite3")
 

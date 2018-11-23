@@ -1,8 +1,8 @@
 
 module KafkaTools
   class Streamer
-    def initialize(partitions: [0])
-      @producer = KafkaTools::Producer.new
+    def initialize(partitions: [0], producer: KafkaTools::Producer.new)
+      @producer = producer
       @partitions = partitions
 
       @topic_cache = {}

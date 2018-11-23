@@ -22,7 +22,7 @@ module KafkaTools
       @consumer.run do |messages|
         @producer.batch do |batch|
           messages.each do |message|
-            diff = message.payload["created_at"] + @delay.to_i - Time.now.utc.to_f
+            diff = message.payload["created_at"] + @delay.to_i - Time.now.to_f
 
             if diff > 0
               if batch.size > 0
