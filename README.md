@@ -65,16 +65,15 @@ KafkaTools.seed_brokers = ["127.0.0.1:9092"]
 KafkaTools.zk_hosts = "127.0.0.1:1281"
 ```
 
-## Producer
+## Model
+
+The `KafkaTools::Model` module installs model lifecycle methods.
 
 ```ruby
-KafkaProducer = KafkaTools::Producer.new
+class MyModel < ActiveRecord::Base
+  include KafkaTools::Model
 
-KafkaProducer.produce("message", topic: "topic1", partition: 0)
-
-KafkaProducer.batch do |batch|
-  batch.produce("message1", topic: "topic2", partition: 0)
-  batch.produce("message2", topic: "topic3", partition: 1)
+  kafka_stream
 end
 ```
 
@@ -83,7 +82,21 @@ end
 ```ruby
 DefaultLogger = Logger.new(STDOUT)
 
-KafkaTools::Consumer.new(topic: "topic1", partition: 0, name: "topic1_consumer", logger: DefaultLogger).run do |messages|
+KafkaTools::Consumer.new(topic: "products", partition: 0, name: "consumer", logger: DefaultLogger).run do |messages|
+  # ...
+end
+```
+
+Please note: if you have multiple kinds of consumers for a single model/topic,
+then you must use distinct names. Assume you have an indexer, which updates a
+search index for a model and a cacher, which updates a cache store for a model:
+
+```ruby
+KafkaTools::Consumer.new(topic: MyModel.kafka_topic, partition: 0, name: "indexer", logger: DefaultLogger).run do |messages|
+  # ...
+end
+
+KafkaTools::Consumer.new(topic: MyModel.kafka_topic, partition: 0, name: "cacher", logger: DefaultLogger).run do |messages|
   # ...
 end
 ```
@@ -96,19 +109,7 @@ enough time has passed. Afterwards the delay re-sends the messages to the desire
 topic where an `Indexer` can fetch it and index it like usual.
 
 ```ruby
-KafkaTools::Delayer.new(topic: "topic1", partition: 0, delay: 300, logger: DefaultLogger).run
-```
-
-## Model
-
-The `KafkaTools::Model` module installs model lifecycle methods.
-
-```ruby
-class MyModel < ActiveRecord::Base
-  include KafkaTools::Model
-
-  kafka_stream
-end
+KafkaTools::Delayer.new(topic: MyModel.kafka_topic, partition: 0, delay: 300, logger: DefaultLogger).run
 ```
 
 ## Streamer

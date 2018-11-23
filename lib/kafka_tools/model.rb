@@ -16,7 +16,7 @@ module KafkaTools
       end
 
       def kafka_topic
-        name.pluralize.underscore.gsub("/", "__")
+        name.pluralize.underscore.gsub("/", "-")
       end
     end
 

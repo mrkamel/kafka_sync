@@ -10,7 +10,7 @@ module KafkaTools
       @consumer = KafkaTools::Consumer.new(
         topic: "#{@topic}-delay",
         partition: @partition,
-        name: "#{@topic}-delayer",
+        name: "delayer",
         batch_size: 250,
         logger: @logger
       )
