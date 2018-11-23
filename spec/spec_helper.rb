@@ -3,7 +3,6 @@ require File.expand_path("../../lib/kafka_tools", __FILE__)
 require "concurrent"
 require "active_record"
 require "factory_bot"
-require "hashie"
 require "database_cleaner"
 
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "/tmp/kafka_tools.sqlite3")

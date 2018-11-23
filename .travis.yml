@@ -1,7 +1,7 @@
 sudo: false
 language: ruby
 rvm:
-  - 2.3.3
+  - ruby-head
 before_install:
   - docker-compose up -d
   - sleep 10
