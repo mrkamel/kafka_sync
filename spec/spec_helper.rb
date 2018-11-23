@@ -57,7 +57,7 @@ class Product < ActiveRecord::Base
 
   belongs_to :category, required: false
 
-  kafka_stream
+  kafka_sync
 
   def kafka_payload
     { id: id, title: title }
