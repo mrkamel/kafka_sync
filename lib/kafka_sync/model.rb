@@ -6,7 +6,7 @@ module KafkaSync
     end
 
     module ClassMethods
-      def kafka_stream(partitions: [0])
+      def kafka_sync(partitions: [0])
         streamer = KafkaSync::Streamer.new(partitions: partitions)
 
         after_save { |object| streamer.delay object }
