@@ -35,8 +35,8 @@ immediately. Instead, they should be fetched after e.g. 5 minutes. Only the
 `after_commit` callback is sending messages to kafka which can be fetched
 immediately by background workers. The delay messages provide a safety net for
 cases when something crashes in between the database commit and the
-`after_commit` callback. Contrary, the purpose of messages send to Kafka from
-within the `after_commit` callback is to keep the secondary data store updated
+`after_commit` callback. Contrary, the purpose of messages sent to Kafka from
+within the `after_commit` callback is to keep the secondary datastore updated
 in near-realtime when everything is working without any issues. Due to the
 combination of delay messages and instant messages, you won't have to to do a
 full re-index after server crashes again, because your secondary datastores
