@@ -17,11 +17,11 @@ module KafkaSync
       bulk_queue(scope)
     end
 
-    def bulk_delay(scope, extra_payload = {})
+    def bulk_delay(scope)
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
-            batch.produce JSON.generate(payload: object.kafka_payload.merge(extra_payload), created_at: Time.now.to_f), topic: "#{topic(object)}-delay", partition: @partitions.sample
+            batch.produce JSON.generate(payload: object.kafka_payload, created_at: Time.now.to_f), topic: "#{topic(object)}-delay", partition: @partitions.sample
           end
         end
       end
@@ -29,11 +29,11 @@ module KafkaSync
       true
     end
 
-    def bulk_queue(scope, extra_payload = {})
+    def bulk_queue(scope)
       enumerable(scope).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
-            batch.produce JSON.generate(object.kafka_payload.merge(extra_payload)), topic: topic(object), partition: @partitions.sample
+            batch.produce JSON.generate(object.kafka_payload), topic: topic(object), partition: @partitions.sample
           end
         end
       end
@@ -41,14 +41,14 @@ module KafkaSync
       true
     end
 
-    def queue(object, extra_payload = {})
-      @producer.produce JSON.generate(object.kafka_payload.merge(extra_payload)), topic: topic(object), partition: @partitions.sample
+    def queue(object)
+      @producer.produce JSON.generate(object.kafka_payload), topic: topic(object), partition: @partitions.sample
 
       true
     end
 
-    def delay(object, extra_payload = {})
-      @producer.produce JSON.generate(payload: object.kafka_payload.merge(extra_payload), created_at: Time.now.to_f), topic: "#{topic(object)}-delay", partition: @partitions.sample
+    def delay(object)
+      @producer.produce JSON.generate(payload: object.kafka_payload, created_at: Time.now.to_f), topic: "#{topic(object)}-delay", partition: @partitions.sample
 
       true
     end
