@@ -26,13 +26,9 @@ module KafkaSync
     end
 
     def current_offset
-      offset = zk.get(@zk_path)[0]
-
-      return if offset.to_s.empty?
-
-      offset.to_i
-    rescue ZK::Exceptions::NoNode
-      nil
+      ZK.open(KafkaSync.zk_hosts) do |zk|
+        get_current_offset(zk)
+      end
     end
 
     def commit(offset)
@@ -45,7 +41,7 @@ module KafkaSync
 
     def run(&block)
      leader_election = KafkaSync::LeaderElection.new(
-        zk: ZK.new(KafkaSync.zk_hosts),
+        zk: zk,
         path: "/kafka_sync/consumer/#{@topic}/#{@partition}/#{@name}/leader",
         value: `hostname`,
         logger: @logger
@@ -58,15 +54,25 @@ module KafkaSync
     private
 
     def zk
-      @zk ||= ZK.new(KafkaSync.zk_hosts)
+      @zk ||= KafkaSync.zk
     end
 
     def kafka
       @kafka ||= Kafka.new(seed_brokers: KafkaSync.seed_brokers, client_id: "kafka_sync")
     end
 
+    def get_current_offset(zk)
+      offset = zk.get(@zk_path)[0]
+
+      return if offset.to_s.empty?
+
+      offset.to_i
+    rescue ZK::Exceptions::NoNode
+      nil
+    end
+
     def work(&block)
-      offset = current_offset || :earliest
+      offset = get_current_offset(zk) || :earliest
 
       loop do
         messages = kafka.fetch_messages(topic: @topic, partition: @partition, offset: offset, max_wait_time: 8).map do |message|

@@ -66,6 +66,8 @@ RSpec.describe KafkaSync::Consumer do
     result = Concurrent::Array.new
 
     pid = fork do
+      KafkaSync.zk.reopen
+
       KafkaSync::Consumer.new(topic: topic, name: "consumer").run do |messages|
         # nothing
       end

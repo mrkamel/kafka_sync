@@ -4,6 +4,7 @@ require "forwardable"
 require "securerandom"
 require "connection_pool"
 require "kafka"
+require "thread"
 require "zk"
 require "kafka_sync/version"
 require "kafka_sync/leader_election"
@@ -21,6 +22,8 @@ module KafkaSync
   self.seed_brokers = ["127.0.0.1:9092"]
   self.zk_hosts = "127.0.0.1:2181"
 
+  @zk_mutex = Mutex.new
+
   def self.last_offset_for(topic:, partition: 0)
     kafka_pool.with do |kafka|
       kafka.last_offset_for(topic, partition)
@@ -30,6 +33,12 @@ module KafkaSync
   def self.kafka_pool
     @kafka_pool ||= ConnectionPool.new do
       Kafka.new(seed_brokers: seed_brokers, client_id: "kafka_sync")
+    end
+  end
+
+  def self.zk
+    @zk_mutex.synchronize do
+      @zk ||= ZK.new(zk_hosts)
     end
   end
 end
