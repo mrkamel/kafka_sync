@@ -5,19 +5,18 @@ module KafkaSync
   class LeaderElection
     include MonitorMixin
 
-    def initialize(zk:, path:, value:, stop_early: false, logger: Logger.new("/dev/null"))
+    def initialize(zk:, path:, value:, logger: Logger.new("/dev/null"))
       @zk = zk
       @path = path
       @value = value
       @id = SecureRandom.hex
-      @stop_early = stop_early
       @logger = logger
+      @status = KafkaSync::ThreadStatus.new
 
       super()
     end
 
     def run
-      @zk.on_connecting { stop_threads if @stop_early }
       @zk.on_connected { elect }
 
       elect
@@ -101,29 +100,35 @@ module KafkaSync
       @logger.info "Becoming leader for #{@path}"
 
       synchronize do
-        @follower_thread.exit if @follower_thread
-        @follower_thread = nil
+        @status.stop
+        @status = KafkaSync::ThreadStatus.new
 
-        @leader_thread = Thread.new(&@leader_proc) if !@leader_thread && @leader_proc
+        if @leader_proc
+          Thread.new do
+            begin
+              @leader_proc.call(@status)
+            rescue => e
+              @logger.error e
+            end
+          end
+        end
       end
     end
 
     def become_follower
       synchronize do
-        @leader_thread.exit if @leader_thread
-        @leader_thread = nil
+        @status.stop
+        @status = KafkaSync::ThreadStatus.new
 
-        @follower_thread = Thread.new(&@follower_proc) if !@follower_thread && @follower_proc
-      end
-    end
-
-    def stop_threads
-      synchronize do
-        @leader_thread.exit if @leader_thread
-        @leader_thread = nil
-
-        @follower_thread.exit if @follower_thread
-        @follower_thread = nil
+        if @follower_proc
+          Thread.new do
+            begin
+              @follower_proc.call(@status)
+            rescue => e
+              @logger.error e
+            end
+          end
+        end
       end
     end
 
