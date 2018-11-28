@@ -72,7 +72,8 @@ module KafkaSync
     end
 
     # Performs the leader election and runs the specified block in case it won
-    # the leader election.
+    # the leader election. The method doesn't block, because a new thread is
+    # started in case the leader election is won.
     #
     # @example
     #   KafkaSync::Consumer.new(topic: "my_topic", partition: 0, name: "indexer").run do |messages|

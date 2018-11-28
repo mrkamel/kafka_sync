@@ -2,8 +2,41 @@
 require "securerandom"
 
 module KafkaSync
+  # The KafkaSync::LeaderElection class performs a leader election using
+  # zookeeper. KafkaSync is using the ruby-zk gem for connecting to zookeeper.
+  # Details regarding how to do leader election using zookeeper can be found
+  # within the zookeeper docs.
+  #
+  # @example
+  #   leader_election = KafkaSync::LeaderElection.new(
+  #     zk: KafkaSync.zk,
+  #     path: "/some/path",
+  #     value: `hostname`.strip,
+  #     logger: Logger.new(STDOUT)
+  #   )
+  #
+  #   leader_election.as_leader do |status|
+  #     until status.stopping?
+  #       # ...
+  #     end
+  #   end
+  #
+  #   leader_election.as_follower do |status|
+  #     # ...
+  #   end
+  #
+  #   leader_election.run
+
   class LeaderElection
     include MonitorMixin
+
+    # Initializes the LeaderElection.
+    #
+    # @param zk [ZK] A ruby-zk zookeeper connection instance
+    # @param path [String] A unique zookeeper path for the leader election
+    # @param value [String] Every unique value for this instance participating
+    #   in the leader election. Often the host's hostname is used.
+    # @param logger [Logger] A logger instance for debug and error messages
 
     def initialize(zk:, path:, value:, logger: Logger.new("/dev/null"))
       @zk = zk
@@ -16,11 +49,32 @@ module KafkaSync
       super()
     end
 
+    # Performs the actual leader election, i.e. voting, leader detection and
+    # performing either the as_leader or as_follower blocks. Please note that
+    # the method is not blocking, such that you probably need to call sleep to
+    # avoid process termination.
+
     def run
       @zk.on_connected { elect }
 
       elect
     end
+
+    # Specifies a block that will be run in case the leader election is won.
+    # The block receives an additional status parameter, which must continously
+    # be checked to recognize leadership changes. Please note that you don't
+    # have to specify a as_leader block, but it doesn't make much sense to
+    # don't specify one. However, if you don't specify a block, nothing will be
+    # executed.
+    #
+    # @param block [Proc] The block to execute when the leader election is won
+    #
+    # @example
+    #   leader_election.as_leader do |status|
+    #     until status.stopping?
+    #       # ...
+    #     end
+    #   end
 
     def as_leader(&block)
       synchronize do
@@ -28,19 +82,34 @@ module KafkaSync
       end
     end
 
+    # Specifies a block that will be run in case the leader election is lost.
+    # The block receives an additional status parameter, which must continously
+    # be checked to recognize leadership changes. Please note that you don't
+    # have to specify a as_follower block. If no block is specified no block,
+    # nothing will be executed.
+    #
+    # @param block [Proc] The block to execute when the leader election is lost
+    #
+    # @example
+    #   leader_election.as_follower do |status|
+    #     until status.stopping?
+    #       # ...
+    #     end
+    #   end
+
     def as_follower(&block)
       synchronize do
         @follower_proc = block
       end
     end
 
+    private
+
     def leader?
       synchronize do
         sequence_numbers.first == @sequence_number
       end
     end
-
-    private
 
     def vote
       synchronize do

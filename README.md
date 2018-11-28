@@ -65,6 +65,12 @@ KafkaSync.seed_brokers = ["127.0.0.1:9092"]
 KafkaSync.zk_hosts = "127.0.0.1:1281"
 ```
 
+## Reference Docs
+
+The reference docs can be found at
+[https://www.rubydoc.info/github/mrkamel/kafka_sync/master](https://www.rubydoc.info/github/mrkamel/kafka_sync/master).
+
+
 ## Model
 
 The `KafkaSync::Model` module installs model lifecycle methods.
@@ -86,6 +92,12 @@ KafkaSync::Consumer.new(topic: "products", partition: 0, name: "consumer", logge
   # ...
 end
 ```
+
+You should run a consumer per (topic, partition, name) tuple on multiple hosts
+for high availability. They will perform a leader election using zookeeper,
+such that only one consumer of them will be actively consuming messages per
+tuple while the others are hot-standbys, i.e. if the leader dies, another
+instance will takeover leadership.
 
 Please note: if you have multiple kinds of consumers for a single model/topic,
 then you must use distinct names. Assume you have an indexer, which updates a
@@ -111,6 +123,9 @@ topic where an `Indexer` can fetch it and index it like usual.
 ```ruby
 KafkaSync::Delayer.new(topic: MyModel.kafka_topic, partition: 0, delay: 300, logger: DefaultLogger).run
 ```
+
+Again, you should run a delayer per (topic, partition) tuple on multiple hosts,
+to ensure high availability.
 
 ## Streamer
 
