@@ -1,12 +1,12 @@
 
 module KafkaSync
-  # A KafkaSync::Streamer writes delay or immedate messages for the objects
+  # A KafkaSync::Streamer writes delay or instant messages for the objects
   # passed to the respective methods. Delay messages need to be fetched by a
-  # KafkaSync::Delayer after a certain amount of time while the immedate
+  # KafkaSync::Delayer after a certain amount of time while the instant
   # messages, as the name implies, can be fetched and processed immediately.
-  # You only need to use a KafkaSync::Streamer directly, if you're using
-  # the update_all, delete_all, etc of your models, because you need to
-  # change calls to those messages.
+  # You only need to use a KafkaSync::Streamer directly, if you're using the
+  # update_all, delete_all, etc of your models, because you need to change
+  # calls to those messages.
   #
   # @example
   #   # before
@@ -41,7 +41,7 @@ module KafkaSync
 
     # Writes delay messages for the specified scope, i.e. an
     # ActiveRecord::Relation or an array of records, then yields and finally
-    # writes the immediate messages to kafka.
+    # writes the instant messages to kafka.
     #
     # @param scope [#find_each, #each] The records to write kafka messages for
     #
