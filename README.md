@@ -42,6 +42,28 @@ combination of delay messages and instant messages, you won't have to to do a
 full re-index after server crashes again, because your secondary datastores
 will be self-healing.
 
+## Why Kafka?
+
+Kafka has unique properties which nicely fit the use case. Reading messages
+from a Kafka topic is done using an offset that must be specified. This allows
+to easily implement bulk processing, which is e.g. very useful when indexing
+data into ElasticSearch performance wise. Moreover, as we can manage committing
+offsets completly on our own, we are free to only commit an offset when all
+messages up to this offset have successfully been processed. Next, Kafka has a
+concept of in-sync replicas and you can configure Kafka to only return success
+to your message producers sending messages if at least N in-sync replicas are
+available and if the message has been replicated to at least M in-sync
+replicas. Thus, you can e.g. start with a three node Kafka setup, with
+min.insync.replicas=2, default.replication.factor=3 and required_acks=-1, where
+-1 means, that the message must have been replicated to all in-sync replicas
+before Kafka returns success to your producers. This greatly improves
+reliability.
+
+However, there now is an alternative to Kafka, because Redis Streams (available
+in Redis >= 5.0) comes with a Redis Streams datatype/feature. So, in case you
+prefer using Redis, you probably want to check out the
+[redstream](https://github.com/mrkamel/redstream) gem.
+
 ## Installation
 
 Add this line to your application's Gemfile:
