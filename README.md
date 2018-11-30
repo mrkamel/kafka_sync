@@ -115,11 +115,11 @@ KafkaSync::Consumer.new(topic: "products", partition: 0, name: "consumer", logge
 end
 ```
 
-You should run a consumer per (topic, partition, name) tuple on multiple hosts
-for high availability. They will perform a leader election using zookeeper,
-such that only one consumer of them will be actively consuming messages per
-tuple while the others are hot-standbys, i.e. if the leader dies, another
-instance will take over leadership.
+You should run a consumer per `(topic, partition, name)` tuple on multiple
+hosts for high availability. They will perform a leader election using
+zookeeper, such that only one consumer of them will be actively consuming
+messages per tuple while the others are hot-standbys, i.e. if the leader dies,
+another instance will take over leadership.
 
 Please note: if you have multiple kinds of consumers for a single model/topic,
 then you must use distinct names. Assume you have an indexer, which updates a
@@ -137,17 +137,20 @@ end
 
 ## Delayer
 
-The delayer fetches the delay messages, ie. messages from the specified delay topic.
+The delayer fetches the delay messages, i.e. messages from the specified delay topic.
 It then checks if enough time has passed in between. Otherwise it will sleep until
 enough time has passed. Afterwards the delay re-sends the messages to the desired
-topic where an `Indexer` can fetch it and index it like usual.
+topic where an indexer can fetch it and index it like usual.
 
 ```ruby
 KafkaSync::Delayer.new(topic: MyModel.kafka_topic, partition: 0, delay: 300, logger: DefaultLogger).run
 ```
 
-Again, you should run a delayer per (topic, partition) tuple on multiple hosts
-for high availability.
+Again, you should run a delayer per `(topic, partition)` tuple on multiple
+hosts for high availability.
+
+As you might have noticed, KafkaSync sends 2 messages to Kafka for every update
+to your models.
 
 ## Streamer
 
