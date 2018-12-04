@@ -39,11 +39,10 @@ module KafkaSync
       @topic_cache_mutex = Mutex.new
     end
 
-    # Writes delay messages for the specified scope, i.e. an
-    # ActiveRecord::Relation or an array of records, then yields and finally
-    # writes the instant messages to kafka.
+    # Writes delay messages for the specified records, then yields and finally
+    # writes the instant messages for the records to kafka.
     #
-    # @param scope [#find_each, #each] The records to write kafka messages for
+    # @param records [#to_a] The records to write kafka messages for
     #
     # @example
     #   streamer.bulk [product1, product2] do
@@ -51,18 +50,20 @@ module KafkaSync
     #     product2.update(price: 30)
     #   end
 
-    def bulk(scope)
-      bulk_delay(scope)
+    def bulk(records)
+      records_array = Array(records)
+
+      bulk_delay(records_array)
 
       yield
 
-      bulk_queue(scope)
+      bulk_queue(records_array)
     end
 
     # @api private
 
-    def bulk_delay(scope)
-      enumerable(scope).each_slice(250) do |slice|
+    def bulk_delay(records)
+      Array(records).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
             batch.produce JSON.generate(payload: object.kafka_payload, created_at: Time.now.to_f), topic: "#{topic(object)}-delay", partition: @partitions.sample
@@ -75,8 +76,8 @@ module KafkaSync
 
     # @api private
 
-    def bulk_queue(scope)
-      enumerable(scope).each_slice(250) do |slice|
+    def bulk_queue(records)
+      Array(records).each_slice(250) do |slice|
         @producer.batch do |batch|
           slice.each do |object|
             batch.produce JSON.generate(object.kafka_payload), topic: topic(object), partition: @partitions.sample
@@ -109,13 +110,6 @@ module KafkaSync
       @topic_cache_mutex.synchronize do
         @topic_cache[object.class] ||= object.class.kafka_topic
       end
-    end
-
-    def enumerable(scope)
-      return scope.find_each if scope.respond_to?(:find_each)
-      return scope if scope.respond_to?(:each)
-
-      Array(scope)
     end
   end
 end

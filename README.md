@@ -54,9 +54,9 @@ concept of in-sync replicas and you can configure Kafka to only return success
 to your message producers sending messages if at least N in-sync replicas are
 available and if the message has been replicated to at least M in-sync
 replicas. Thus, you can e.g. start with a three node Kafka setup, with
-min.insync.replicas=2, default.replication.factor=3 and required_acks=-1, where
--1 means, that the message must have been replicated to all in-sync replicas
-before Kafka returns success to your producers. This greatly improves
+`min.insync.replicas=2`, `default.replication.factor=3` and `required_acks=-1`,
+where -1 means, that the message must have been replicated to all in-sync
+replicas before Kafka returns success to your producers. This greatly improves
 reliability.
 
 However, there now is an alternative to Kafka, because Redis Streams (available
@@ -135,12 +135,35 @@ KafkaSync::Consumer.new(topic: MyModel.kafka_topic, partition: 0, name: "cacher"
 end
 ```
 
+Please note that it's up to you to detect and handle deletions. More
+concretely, `after_destroy` writes the same message to kafka as `after_save`,
+such that your consumer needs to fetch the records specified by the kafka
+messages, check which of them no longer exist and update your secondary
+datastores accordingly. The code can be as simple as:
+
+```ruby
+  KafkaSync::Consumer.new(topic: MyModel.kafka_topic, partition: 0, name: "my_consumer").run do |messages|
+    ids = messages.map { |message| message.payload["id"] }
+    records = MyModel.where(id: ids).index_by(&:id)
+
+    ids.each do |id|
+      if object = records[id]
+        # update secondary data store
+      else
+        # delete from secondary data store
+      end
+    end
+  end
+```
+
+Of course, batching the updates/deletions usually improves the performance.
+
 ## Delayer
 
-The delayer fetches the delay messages, i.e. messages from the specified delay topic.
-It then checks if enough time has passed in between. Otherwise it will sleep until
-enough time has passed. Afterwards the delay re-sends the messages to the desired
-topic where an indexer can fetch it and index it like usual.
+The delayer fetches the delay messages, i.e. messages from the specified delay
+topic. It then checks if enough time has passed in between. Otherwise it will
+sleep until enough time has passed. Afterwards the delay re-sends the messages
+to the desired topic where an indexer can fetch it and index it like usual.
 
 ```ruby
 KafkaSync::Delayer.new(topic: MyModel.kafka_topic, partition: 0, delay: 300, logger: DefaultLogger).run
@@ -178,6 +201,12 @@ Product.where(on_stock: true).find_in_batches do |products|
 end
 ```
 
+The `#bulk` method must ensure that the same set of records is used for the
+delay messages and the instant messages. Thus, you better directly pass an
+array of records to `KafkaSync::Streamer#bulk`, like shown above. If you pass
+an `ActiveRecord::Relation`, the `#bulk` method will convert it to an array,
+i.e. load the whole result set into memory.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/mrkamel/kafka_sync.
@@ -185,3 +214,4 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/mrkame
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+
