@@ -22,23 +22,31 @@ module KafkaSync
     # Used to collect the messages in batches.
 
     class Batch
-      def initialize(producer)
-        @producer = producer
-        @size = 0
+      def initialize(producer_pool)
+        @producer_pool = producer_pool
+        @messages = []
       end
 
       def produce(message, topic:, partition: 0)
-        @producer.produce(message, topic: topic, partition: partition)
-        @size += 1
+        @messages << [message, topic, partition]
       end
 
       def deliver
-        @producer.deliver_messages if @size > 0
-        @size = 0
+        return if @messages.size.zero?
+
+        @producer_pool.with do |producer|
+          @messages.each do |message, topic, partition|
+            producer.produce(message, topic: topic, partition: partition)
+          end
+
+          producer.deliver_messages
+        end
+
+        @messages = []
       end
 
       def size
-        @size
+        @messages.size
       end
     end
 
@@ -80,13 +88,11 @@ module KafkaSync
     #   end
 
     def batch
-      @producer_pool.with do |producer|
-        batch = Batch.new(producer)
+      batch = Batch.new(@producer_pool)
 
-        yield batch
+      yield batch
 
-        producer.deliver_messages if batch.size > 0
-      end
+      batch.deliver
     end
   end
 end
