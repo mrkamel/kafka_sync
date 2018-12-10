@@ -169,11 +169,15 @@ module KafkaSync
       @logger.info "Becoming leader for #{@path}"
 
       synchronize do
+        return if @leader_thread && @leader_thread.alive?
+
+        @follower_thread = nil
+
         @status.stop
         @status = KafkaSync::ThreadStatus.new
 
         if @leader_proc
-          Thread.new do
+          @leader_thread = Thread.new do
             begin
               @leader_proc.call(@status)
             rescue => e
@@ -186,11 +190,15 @@ module KafkaSync
 
     def become_follower
       synchronize do
+        return if @follower_thread && @follower_thread.alive?
+
+        @leader_thread = nil
+
         @status.stop
         @status = KafkaSync::ThreadStatus.new
 
         if @follower_proc
-          Thread.new do
+          @follower_thread = Thread.new do
             begin
               @follower_proc.call(@status)
             rescue => e
